@@ -38,7 +38,6 @@ TEMPLATE.innerHTML = `
   display: block !important;
   position: relative !important;
   margin: 0px !important;
-  contain: content !important;
 }
 </style>
 <div id="spacerStart"></div>
@@ -98,15 +97,7 @@ class VirtualContent extends HTMLElement {
     this[_spacerEndHeight] = 0;
 
     this[_hiddenStartRange] = new Range();
-    this[_hiddenStartRange].setStart(this, 0);
-    this[_hiddenStartRange].setEnd(this, 0);
-
-    // TODO: Reading child nodes in the constructor is technically not allowed...
-    const childNodesLength = this.childNodes.length;
     this[_hiddenEndRange] = new Range();
-    this[_hiddenEndRange].setStart(this, childNodesLength);
-    this[_hiddenEndRange].setEnd(this, childNodesLength);
-
     this[_nextHiddenStartRange] = this[_hiddenStartRange].cloneRange();
     this[_nextHiddenEndRange] = this[_hiddenEndRange].cloneRange();
 
@@ -133,6 +124,8 @@ class VirtualContent extends HTMLElement {
     this[_childrenPendingShow] = new Set();
     this[_childrenPendingHide] = new Set();
 
+    this._container = document.createElement('div');
+
     window.requestAnimationFrame(() => {
       this.normalize();
 
@@ -156,13 +149,25 @@ class VirtualContent extends HTMLElement {
         }
 
         this[_hideChild](child);
-        child = child.nextSibling;
+        const nextSibling = child.nextSibling;
+        this._container.appendChild(child);
+        child = nextSibling;
       }
+
+      this.appendChild(this._container);
+
+      const childNodesLength = this._container.childNodes.length;
+      this[_hiddenStartRange].setStart(this._container, 0);
+      this[_hiddenStartRange].setEnd(this._container, 0);
+      this[_hiddenEndRange].setStart(this._container, childNodesLength);
+      this[_hiddenEndRange].setEnd(this._container, childNodesLength);
+      this[_nextHiddenStartRange] = this[_hiddenStartRange].cloneRange();
+      this[_nextHiddenEndRange] = this[_hiddenEndRange].cloneRange();
 
       // Set `_nextHiddenEndRange` to cover all children so that
       // `_updateSpacers` will include them in the esimate for `_spacerStartHeight`.
       // TODO: Is it correct to replace this section with a call to `_flush`?
-      this[_nextHiddenEndRange].setStart(this, 0);
+      this[_nextHiddenEndRange].setStart(this._container, 0);
       this[_updateSpacers]();
       this[_hiddenEndRange] = this[_nextHiddenEndRange].cloneRange();
 
@@ -193,7 +198,7 @@ class VirtualContent extends HTMLElement {
   }
 
   [_hideNextVisibleRange]() {
-    const childNodes = this.childNodes;
+    const childNodes = this._container.childNodes;
     let estimatedAdjustedHeight = 0;
 
     for (let i = this[_nextHiddenStartRange].endOffset; i < this[_nextHiddenEndRange].startOffset; i++) {
@@ -213,7 +218,7 @@ class VirtualContent extends HTMLElement {
   }
 
   [_thisObserverCallback](entries) {
-    const childNodes = this.childNodes;
+    const childNodes = this._container.childNodes;
     let didMoveToEdge = false;
 
     for (const entry of entries) {
@@ -228,8 +233,8 @@ class VirtualContent extends HTMLElement {
           entry.boundingClientRect.top < entry.rootBounds.bottom &&
           entry.rootBounds.bottom < entry.boundingClientRect.bottom) {
         this[_hideNextVisibleRange]();
-        this[_nextHiddenStartRange].setEnd(this, 0);
-        this[_nextHiddenEndRange].setStart(this, 0);
+        this[_nextHiddenStartRange].setEnd(this._container, 0);
+        this[_nextHiddenEndRange].setStart(this._container, 0);
         this[_expandEnd](entry.rootBounds.bottom - entry.boundingClientRect.top);
         didMoveToEdge = true;
       }
@@ -240,8 +245,8 @@ class VirtualContent extends HTMLElement {
           entry.boundingClientRect.bottom < entry.rootBounds.bottom) {
         this[_hideNextVisibleRange]();
         const childNodesLength = childNodes.length;
-        this[_nextHiddenStartRange].setEnd(this, childNodesLength);
-        this[_nextHiddenEndRange].setStart(this, childNodesLength);
+        this[_nextHiddenStartRange].setEnd(this._container, childNodesLength);
+        this[_nextHiddenEndRange].setStart(this._container, childNodesLength);
         this[_expandStart](entry.boundingClientRect.bottom - entry.rootBounds.top);
         didMoveToEdge = true;
       }
@@ -282,13 +287,13 @@ class VirtualContent extends HTMLElement {
   }
 
   [_moveStart](distance, fillHeight) {
-    const childNodes = this.childNodes;
+    const childNodes = this._container.childNodes;
 
     // Hide all currently visible nodes.
     let estimatedAdjustedHeight = this[_hideNextVisibleRange]();
 
     // Move all newly hidden elements into the end range.
-    this[_nextHiddenEndRange].setStart(this, this[_nextHiddenStartRange].endOffset);
+    this[_nextHiddenEndRange].setStart(this._container, this[_nextHiddenStartRange].endOffset);
 
     // Slide the now-mutual hidden area bounds backward until reaching the
     // first node that should appear within the viewport.
@@ -298,8 +303,8 @@ class VirtualContent extends HTMLElement {
       estimatedAdjustedHeight += this[_heightEstimator].estimateHeight(child);
       adjustedIndex = i;
     }
-    this[_nextHiddenStartRange].setEnd(this, adjustedIndex);
-    this[_nextHiddenEndRange].setStart(this, adjustedIndex);
+    this[_nextHiddenStartRange].setEnd(this._container, adjustedIndex);
+    this[_nextHiddenEndRange].setStart(this._container, adjustedIndex);
 
     this[_expandStart](fillHeight);
   }
@@ -307,7 +312,7 @@ class VirtualContent extends HTMLElement {
   [_expandStart](distance) {
     // Add new elements to the start of the visible range.
     let estimatedAddedHeight = 0;
-    let next = this.childNodes[this[_nextHiddenStartRange].endOffset] || null;
+    let next = this._container.childNodes[this[_nextHiddenStartRange].endOffset] || null;
     let previousSibling = next === null ? this.lastChild : next.previousSibling;
     let nextFirstVisibleNode = undefined;
 
@@ -325,14 +330,14 @@ class VirtualContent extends HTMLElement {
   }
 
   [_moveEnd](distance, fillHeight) {
-    const childNodes = this.childNodes;
+    const childNodes = this._container.childNodes;
     const childNodesLength = childNodes.length;
 
     // Hide all currently visible nodes.
     let estimatedAdjustedHeight = this[_hideNextVisibleRange]();
 
     // Move all newly hidden elements into the start range.
-    this[_nextHiddenStartRange].setEnd(this, this[_nextHiddenEndRange].startOffset);
+    this[_nextHiddenStartRange].setEnd(this._container, this[_nextHiddenEndRange].startOffset);
 
     // Slide the now-mutual hidden area bounds forward until reaching the first
     // node that should appear within the viewport.
@@ -342,8 +347,8 @@ class VirtualContent extends HTMLElement {
       estimatedAdjustedHeight += this[_heightEstimator].estimateHeight(child);
       adjustedIndex = i;
     }
-    this[_nextHiddenStartRange].setEnd(this, adjustedIndex);
-    this[_nextHiddenEndRange].setStart(this, adjustedIndex);
+    this[_nextHiddenStartRange].setEnd(this._container, adjustedIndex);
+    this[_nextHiddenEndRange].setStart(this._container, adjustedIndex);
 
     this[_expandEnd](fillHeight);
   }
@@ -351,7 +356,7 @@ class VirtualContent extends HTMLElement {
   [_expandEnd](distance) {
     // Add new elements to the end of the visible range.
     let estimatedAddedHeight = 0;
-    let next = this.childNodes[this[_nextHiddenEndRange].startOffset] || null;
+    let next = this._container.childNodes[this[_nextHiddenEndRange].startOffset] || null;
     let nextLastVisibleNode = undefined;
 
     while (next !== null && estimatedAddedHeight < distance) {
@@ -461,7 +466,7 @@ class VirtualContent extends HTMLElement {
         this[_nextHiddenEndRange].startOffset);
     const firstIntersectionElement =
         intersectionStartIndex < intersectionEndIndex ?
-        this.childNodes[intersectionStartIndex] :
+        this._container.childNodes[intersectionStartIndex] :
         undefined;
     const firstIntersectionElementStartRect =
         firstIntersectionElement !== undefined ?
@@ -492,8 +497,8 @@ class VirtualContent extends HTMLElement {
     this[_updateSpacers]();
 
     // Set the current ranges to the updated ranges.
-    this[_hiddenStartRange].setEnd(this, this[_nextHiddenStartRange].endOffset);
-    this[_hiddenEndRange].setStart(this, this[_nextHiddenEndRange].startOffset);
+    this[_hiddenStartRange].setEnd(this._container, this[_nextHiddenStartRange].endOffset);
+    this[_hiddenEndRange].setStart(this._container, this[_nextHiddenEndRange].startOffset);
 
     // If there was an element in both the old and new visible regions, make
     // sure its in the same viewport-relative position.
@@ -515,7 +520,7 @@ class VirtualContent extends HTMLElement {
   }
 
   [_updateSpacers]() {
-    const childNodes = this.childNodes;
+    const childNodes = this._container.childNodes;
 
     // Estimate the change in the start spacer height.
     const nextHiddenStartRangeEndOffset = this[_nextHiddenStartRange].endOffset;
