@@ -399,6 +399,7 @@ class VirtualContent extends HTMLElement {
       this[_enqueueHide](child);
     }
 
+    performance.mark('intersectsNode,compareDocumentPosition:start');
     if (newHiddenStartChildEntries.length > 0) {
       // Find the last newly hidden child on the start side of the visible set
       // and set the next start range's end to after that child.
@@ -424,6 +425,8 @@ class VirtualContent extends HTMLElement {
         }
       }
     }
+    performance.mark('intersectsNode,compareDocumentPosition:end');
+    performance.measure('intersectsNode,compareDocumentPosition', 'intersectsNode,compareDocumentPosition:start', 'intersectsNode,compareDocumentPosition:end');
   }
 
   [_enqueueShow](child) {
@@ -503,8 +506,11 @@ class VirtualContent extends HTMLElement {
     // If there was an element in both the old and new visible regions, make
     // sure its in the same viewport-relative position.
     if (firstIntersectionElement !== undefined) {
+      performance.mark('getBoundingClientRect:start');
       const firstIntersectionElementEndRect =
           firstIntersectionElement.getBoundingClientRect();
+      performance.mark('getBoundingClientRect:end');
+      performance.measure('getBoundingClientRect', 'getBoundingClientRect:start', 'getBoundingClientRect:end');
       // TODO: `document.scrollingElement` here should really be whatever
       // element happens to be the scroll parent of this element.
       document.scrollingElement.scrollTop +=
