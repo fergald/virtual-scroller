@@ -155,6 +155,7 @@ export class VirtualContent extends HTMLElement {
           this[_resizeObserver].unobserve(node);
           this[_intersectionObserver].unobserve(node);
           node.removeAttribute('invisible');
+          node.displayLock.commit();
           estimatedHeights.delete(node);
         }
       }
@@ -169,6 +170,7 @@ export class VirtualContent extends HTMLElement {
           // elements could be maybe in the viewport, at which point the
           // necessary ones will get rendered.
           node.setAttribute('invisible', '');
+          node.displayLock.acquire({ timeout: Infinity, activatable: true });
           estimatedHeights.set(node, DEFAULT_HEIGHT_ESTIMATE);
         } else {
           // Remove non-element children because we can't control their
@@ -295,6 +297,7 @@ export class VirtualContent extends HTMLElement {
       if (maybeInViewport || child === childToForceVisible) {
         if (child.hasAttribute('invisible')) {
           child.removeAttribute('invisible');
+          child.displayLock.commit();
           this[_resizeObserver].observe(child);
           this[_intersectionObserver].observe(child);
 
@@ -325,6 +328,7 @@ export class VirtualContent extends HTMLElement {
           renderedHeight += possiblyCachedHeight;
         } else {
           child.setAttribute('invisible', '');
+          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
 
@@ -333,6 +337,7 @@ export class VirtualContent extends HTMLElement {
       } else {
         if (!child.hasAttribute('invisible')) {
           child.setAttribute('invisible', '');
+          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
         }
