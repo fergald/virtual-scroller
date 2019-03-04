@@ -47,6 +47,7 @@ const TEMPLATE = `
   flex: 0 0 auto !important;
   display: block !important;
   position: relative !important;
+  contain: layout style
 }
 </style>
 <div id="emptySpaceSentinelContainer"></div>
@@ -70,6 +71,7 @@ const _update = Symbol('_update');
 export class VirtualContent extends HTMLElement {
   constructor() {
     super();
+    console.log("here");
 
     [_intersectionObserverCallback,
      _mutationObserverCallback,
@@ -119,6 +121,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   [_intersectionObserverCallback](entries) {
+    console.log("here");
     for (const {target, isIntersecting} of entries) {
       // Update if the <virtual-content> has moved into or out of the viewport.
       if (target === this) {
@@ -144,6 +147,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   [_mutationObserverCallback](records) {
+    console.log("here");
     const estimatedHeights = this[_cachedHeights];
 
     for (const record of records) {
@@ -154,6 +158,7 @@ export class VirtualContent extends HTMLElement {
           this[_resizeObserver].unobserve(node);
           this[_intersectionObserver].unobserve(node);
           node.removeAttribute('invisible');
+//          node.displayLock.commit();
           estimatedHeights.delete(node);
         }
       }
@@ -168,6 +173,7 @@ export class VirtualContent extends HTMLElement {
           // elements could be maybe in the viewport, at which point the
           // necessary ones will get rendered.
           node.setAttribute('invisible', '');
+//          node.displayLock.acquire({ timeout: Infinity, activatable: true });
           estimatedHeights.set(node, DEFAULT_HEIGHT_ESTIMATE);
         } else {
           // Remove non-element children because we can't control their
@@ -187,10 +193,12 @@ export class VirtualContent extends HTMLElement {
   }
 
   [_resizeObserverCallback]() {
+    console.log("here");
     this[_scheduleUpdate]();
   }
 
   [_onActivateinvisible](e) {
+    console.log("here");
     // Find the child containing the target and synchronously update, forcing
     // that child to be visible. The browser will automatically scroll to that
     // element because it is visible, which will trigger another update to make
@@ -203,6 +211,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   [_scheduleUpdate]() {
+    console.log("here");
     if (this[_updateRAFToken] !== undefined)
       return;
 
@@ -212,6 +221,7 @@ export class VirtualContent extends HTMLElement {
   // TODO: this method is enormous. Split it up into several separate steps.
   // https://refactoring.guru/smells/long-method
   [_update](childToForceVisible) {
+    console.log("here");
     this[_updateRAFToken] = undefined;
 
     const thisClientRect = this.getBoundingClientRect();
@@ -294,6 +304,7 @@ export class VirtualContent extends HTMLElement {
       if (maybeInViewport || child === childToForceVisible) {
         if (child.hasAttribute('invisible')) {
           child.removeAttribute('invisible');
+//          child.displayLock.commit();
           this[_resizeObserver].observe(child);
           this[_intersectionObserver].observe(child);
 
@@ -324,6 +335,7 @@ export class VirtualContent extends HTMLElement {
           renderedHeight += possiblyCachedHeight;
         } else {
           child.setAttribute('invisible', '');
+//          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
 
@@ -332,6 +344,7 @@ export class VirtualContent extends HTMLElement {
       } else {
         if (!child.hasAttribute('invisible')) {
           child.setAttribute('invisible', '');
+//          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
         }
