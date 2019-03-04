@@ -17,11 +17,6 @@ const DEFAULT_HEIGHT_ESTIMATE = 100;
 const TEMPLATE = `
 <style>
 :host {
-  /* Use flex to prevent children's margins from collapsing. Avoiding margin
-   * collapsing is simpler and good enough to start with. */
-  display: flex;
-  flex-direction: column;
-
   /* Browsers will automatically change the scroll position after we modify the
    * DOM, unless we turn it off with this property. We want to do the adjustments
    * ourselves in [_update](), instead. */
@@ -44,7 +39,6 @@ const TEMPLATE = `
 }
 
 ::slotted(*) {
-  flex: 0 0 auto !important;
   display: block !important;
   position: relative !important;
   contain: layout style
