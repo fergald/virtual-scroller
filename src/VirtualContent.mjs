@@ -17,11 +17,6 @@ const DEFAULT_HEIGHT_ESTIMATE = 100;
 const TEMPLATE = `
 <style>
 :host {
-  /* Use flex to prevent children's margins from collapsing. Avoiding margin
-   * collapsing is simpler and good enough to start with. */
-  display: flex;
-  flex-direction: column;
-
   /* Browsers will automatically change the scroll position after we modify the
    * DOM, unless we turn it off with this property. We want to do the adjustments
    * ourselves in [_update](), instead. */
@@ -44,7 +39,6 @@ const TEMPLATE = `
 }
 
 ::slotted(*) {
-  flex: 0 0 auto !important;
   display: block !important;
   position: relative !important;
   contain: layout style
@@ -304,7 +298,7 @@ export class VirtualContent extends HTMLElement {
       if (maybeInViewport || child === childToForceVisible) {
         if (child.hasAttribute('invisible')) {
           child.removeAttribute('invisible');
-//          child.displayLock.commit();
+          child.displayLock.commit();
           this[_resizeObserver].observe(child);
           this[_intersectionObserver].observe(child);
 
@@ -335,7 +329,7 @@ export class VirtualContent extends HTMLElement {
           renderedHeight += possiblyCachedHeight;
         } else {
           child.setAttribute('invisible', '');
-//          child.displayLock.acquire({ timeout: Infinity, activatable: true });
+          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
 
@@ -344,7 +338,7 @@ export class VirtualContent extends HTMLElement {
       } else {
         if (!child.hasAttribute('invisible')) {
           child.setAttribute('invisible', '');
-//          child.displayLock.acquire({ timeout: Infinity, activatable: true });
+          child.displayLock.acquire({ timeout: Infinity, activatable: true });
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
         }
