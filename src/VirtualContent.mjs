@@ -47,6 +47,7 @@ const TEMPLATE = `
   flex: 0 0 auto !important;
   display: block !important;
   position: relative !important;
+  contain: layout style
 }
 </style>
 <div id="emptySpaceSentinelContainer"></div>
