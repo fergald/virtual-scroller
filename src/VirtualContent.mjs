@@ -54,6 +54,8 @@ const _resizeObserver = Symbol('_resizeObserver');
 const _cachedHeights = Symbol('_estimatedHeights');
 const _updateRAFToken = Symbol('_updateRAFToken');
 const _emptySpaceSentinelContainer = Symbol('_emptySpaceSentinelContainer');
+const _showElement = Symbol('_showElement');
+const _hideElement = Symbol('_hideElement');
 
 const _intersectionObserverCallback = Symbol('_intersectionObserverCallback');
 const _mutationObserverCallback = Symbol('_mutationObserverCallback');
@@ -61,6 +63,7 @@ const _resizeObserverCallback = Symbol('_resizeObserverCallback');
 const _onActivateinvisible = Symbol('_onActivateinvisible');
 const _scheduleUpdate = Symbol('_scheduleUpdate');
 const _update = Symbol('_update');
+const _toShow = Symbol('_toShow');
 
 export class VirtualContent extends HTMLElement {
   constructor() {
@@ -72,6 +75,8 @@ export class VirtualContent extends HTMLElement {
      _onActivateinvisible,
      _scheduleUpdate,
      _update,
+     _showElement,
+     _hideElement,
     ].forEach(x => this[x] = this[x].bind(this));
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
@@ -87,7 +92,7 @@ export class VirtualContent extends HTMLElement {
     this[_updateRAFToken] = undefined;
     this[_emptySpaceSentinelContainer] =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
-
+    this[_toShow] = new Set();
     this[_intersectionObserver].observe(this);
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
@@ -111,6 +116,31 @@ export class VirtualContent extends HTMLElement {
     // measure its height, etc.)
     this.addEventListener(
         'activateinvisible', this[_onActivateinvisible], {capture: true});
+  }
+
+  ["short"](e) {
+    return e.innerText.substr(0, 3);
+  }
+
+  [_showElement](e) {
+    this[_toShow].add(e);
+    window.requestAnimationFrame(() => {
+      for (const e of this[_toShow]) {
+        e.removeAttribute('invisible');
+        e.displayLock.commit();
+        console.log("unlocking", this.short(e));
+      }
+      this[_toShow].clear();
+    });
+  }
+
+  [_hideElement](e) {
+    e.setAttribute('invisible', '');
+    e.displayLock.acquire({ timeout: Infinity, activatable: true });
+    console.log("locking", this.short(e));
+    if (this[_toShow].has(e)) {
+      this[_toShow].remove(e);
+    }
   }
 
   [_intersectionObserverCallback](entries) {
@@ -148,8 +178,7 @@ export class VirtualContent extends HTMLElement {
           // longer under our control.
           this[_resizeObserver].unobserve(node);
           this[_intersectionObserver].unobserve(node);
-          node.removeAttribute('invisible');
-          node.displayLock.commit();
+          this[_showElement](node);
           estimatedHeights.delete(node);
         }
       }
@@ -163,8 +192,7 @@ export class VirtualContent extends HTMLElement {
           // [_update]() will remove invisible="" if it calculates that the
           // elements could be maybe in the viewport, at which point the
           // necessary ones will get rendered.
-          node.setAttribute('invisible', '');
-          node.displayLock.acquire({ timeout: Infinity, activatable: true });
+          this[_hideElement](node);
           estimatedHeights.set(node, DEFAULT_HEIGHT_ESTIMATE);
         } else {
           // Remove non-element children because we can't control their
@@ -292,8 +320,7 @@ export class VirtualContent extends HTMLElement {
 
       if (maybeInViewport || child === childToForceVisible) {
         if (child.hasAttribute('invisible')) {
-          child.removeAttribute('invisible');
-          child.displayLock.commit();
+          this[_showElement](child);
           this[_resizeObserver].observe(child);
           this[_intersectionObserver].observe(child);
 
@@ -325,8 +352,7 @@ export class VirtualContent extends HTMLElement {
           child.style.top = `${nextTop - renderedHeight}px`;
           renderedHeight += possiblyCachedHeight;
         } else {
-          child.setAttribute('invisible', '');
-          child.displayLock.acquire({ timeout: Infinity, activatable: true });
+          this[_hideElement](child);
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
 
@@ -334,8 +360,7 @@ export class VirtualContent extends HTMLElement {
         }
       } else {
         if (!child.hasAttribute('invisible')) {
-          child.setAttribute('invisible', '');
-          child.displayLock.acquire({ timeout: Infinity, activatable: true });
+          this[_hideElement](child);
           this[_resizeObserver].unobserve(child);
           this[_intersectionObserver].unobserve(child);
         }
