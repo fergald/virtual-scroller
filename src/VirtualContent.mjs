@@ -260,7 +260,9 @@ export class VirtualContent extends HTMLElement {
         nextEmptySpaceSentinel = sentinel.nextSibling;
 
         const sentinelStyle = sentinel.style;
+        console.log(`sentinel top ${nextTop - currentInvisibleRunHeight}`);
         sentinelStyle.top = `${nextTop - currentInvisibleRunHeight}px`;
+        console.log(`sentinel height ${currentInvisibleRunHeight}px`);
         sentinelStyle.height = `${currentInvisibleRunHeight}px`,
 
         this[_intersectionObserver].observe(sentinel);
@@ -315,9 +317,11 @@ export class VirtualContent extends HTMLElement {
         const isInViewport = (0 <= childClientTop + possiblyCachedHeight) &&
             (childClientTop <= window.innerHeight);
 
+        console.log(`nextTop ${nextTop}`, this.short(child));
         if (isInViewport || child === childToForceVisible) {
           insertEmptySpaceSentinelIfNeeded();
 
+          console.log(`setting top ${nextTop}`, this.short(child));
           child.style.top = `${nextTop - renderedHeight}px`;
           renderedHeight += possiblyCachedHeight;
         } else {
