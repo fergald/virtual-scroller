@@ -7,7 +7,6 @@ import '../../src/virtual-content.mjs';
       const template = document.getElementById('MAIN_TEMPLATE');
 
       virtualContent.appendChild(template.content);
-      let i = 0;
       for (const child of virtualContent.childNodes) {
           if (child instanceof Element) {
               child.setAttribute('invisible', '');
