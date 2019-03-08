@@ -66,18 +66,25 @@ const _update = Symbol('_update');
 const _toShow = Symbol('_toShow');
 
 export class VirtualContent extends HTMLElement {
+  #cachedHeights = new WeakMap();
+  #toShow = new Set();
+  #updateRAFToken;
+  #intersectionObserver;
+  #mutationObserver;
+  #resizeObserver;
+  #emptySpaceSentinelContainer;
+
   constructor() {
     super();
 
-    [_intersectionObserverCallback,
-     _mutationObserverCallback,
-     _resizeObserverCallback,
-     _onActivateinvisible,
-     _scheduleUpdate,
-     _update,
-     _showElement,
-     _hideElement,
-    ].forEach(x => this[x] = this[x].bind(this));
+    this.#intersectionObserverCallback = this.#intersectionObserverCallback.bind(this);
+    this.#mutationObserverCallback = this.#mutationObserverCallback.bind(this);
+    this.#resizeObserverCallback = this.#resizeObserverCallback.bind(this);
+    this.#onActivateinvisible = this.#onActivateinvisible.bind(this);
+    this.#scheduleUpdate = this.#scheduleUpdate.bind(this);
+    this.#update = this.#update.bind(this);
+    this.#showElement = this.#showElement.bind(this);
+    this.#hideElement = this.#hideElement.bind(this);
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
 
@@ -88,11 +95,8 @@ export class VirtualContent extends HTMLElement {
     this.#mutationObserver =
         new MutationObserver(this.#mutationObserverCallback);
     this.#resizeObserver = new ResizeObserver(this.#resizeObserverCallback);
-    this.#cachedHeights = new WeakMap();
-    this.#updateRAFToken = undefined;
     this.#emptySpaceSentinelContainer =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
-    this.#toShow = new Set();
     this.#intersectionObserver.observe(this);
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
