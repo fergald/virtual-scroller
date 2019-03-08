@@ -7,12 +7,6 @@ import '../../src/virtual-content.mjs';
       const template = document.getElementById('MAIN_TEMPLATE');
 
       virtualContent.appendChild(template.content);
-      for (const child of virtualContent.childNodes) {
-          if (child instanceof Element) {
-              child.setAttribute('invisible', '');
-              child.displayLock.acquire({ timeout: Infinity, activatable: true });
-          }
-      }
   };
   populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
