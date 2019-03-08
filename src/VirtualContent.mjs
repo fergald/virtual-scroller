@@ -48,23 +48,6 @@ const TEMPLATE = `
 <slot></slot>
 `;
 
-const _intersectionObserver = Symbol('_intersectionObserver');
-const _mutationObserver = Symbol('_mutationObserver');
-const _resizeObserver = Symbol('_resizeObserver');
-const _cachedHeights = Symbol('_estimatedHeights');
-const _updateRAFToken = Symbol('_updateRAFToken');
-const _emptySpaceSentinelContainer = Symbol('_emptySpaceSentinelContainer');
-const _showElement = Symbol('_showElement');
-const _hideElement = Symbol('_hideElement');
-
-const _intersectionObserverCallback = Symbol('_intersectionObserverCallback');
-const _mutationObserverCallback = Symbol('_mutationObserverCallback');
-const _resizeObserverCallback = Symbol('_resizeObserverCallback');
-const _onActivateinvisible = Symbol('_onActivateinvisible');
-const _scheduleUpdate = Symbol('_scheduleUpdate');
-const _update = Symbol('_update');
-const _toShow = Symbol('_toShow');
-
 export class VirtualContent extends HTMLElement {
   #cachedHeights = new WeakMap();
   #toShow = new Set();
