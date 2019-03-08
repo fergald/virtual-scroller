@@ -122,7 +122,7 @@ export class VirtualContent extends HTMLElement {
     return e.innerText.substr(0, 3);
   }
 
-  [_showElement](e) {
+  #showElement = (e) => {
     this[_toShow].add(e);
     window.requestAnimationFrame(() => {
       for (const e of this[_toShow]) {
@@ -134,7 +134,7 @@ export class VirtualContent extends HTMLElement {
     });
   }
 
-  [_hideElement](e) {
+  #hideElement = (e) => {
     e.setAttribute('invisible', '');
     e.displayLock.acquire({ timeout: Infinity, activatable: true });
     console.log("locking", this.short(e));
@@ -143,7 +143,7 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  [_intersectionObserverCallback](entries) {
+  #intersectionObserverCallback = (entries) => {
     for (const {target, isIntersecting} of entries) {
       // Update if the <virtual-content> has moved into or out of the viewport.
       if (target === this) {
@@ -168,7 +168,7 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  [_mutationObserverCallback](records) {
+  #mutationObserverCallback = (records) => {
     const estimatedHeights = this[_cachedHeights];
 
     for (const record of records) {
@@ -211,11 +211,11 @@ export class VirtualContent extends HTMLElement {
     this[_scheduleUpdate]();
   }
 
-  [_resizeObserverCallback]() {
+  #resizeObserverCallback = () => {
     this[_scheduleUpdate]();
   }
 
-  [_onActivateinvisible](e) {
+  #onActivateinvisible = (e) => {
     // Find the child containing the target and synchronously update, forcing
     // that child to be visible. The browser will automatically scroll to that
     // element because it is visible, which will trigger another update to make
@@ -227,7 +227,7 @@ export class VirtualContent extends HTMLElement {
     this[_update](child);
   }
 
-  [_scheduleUpdate]() {
+  #scheduleUpdate = () => {
     if (this[_updateRAFToken] !== undefined)
       return;
 
@@ -236,7 +236,7 @@ export class VirtualContent extends HTMLElement {
 
   // TODO: this method is enormous. Split it up into several separate steps.
   // https://refactoring.guru/smells/long-method
-  [_update](childToForceVisible) {
+  #update = (childToForceVisible) => {
     this[_updateRAFToken] = undefined;
 
     const thisClientRect = this.getBoundingClientRect();
