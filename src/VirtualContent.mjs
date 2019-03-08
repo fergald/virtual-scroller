@@ -83,21 +83,21 @@ export class VirtualContent extends HTMLElement {
 
     shadowRoot.innerHTML = TEMPLATE;
 
-    this[_intersectionObserver] =
-        new IntersectionObserver(this[_intersectionObserverCallback]);
-    this[_mutationObserver] =
-        new MutationObserver(this[_mutationObserverCallback]);
-    this[_resizeObserver] = new ResizeObserver(this[_resizeObserverCallback]);
-    this[_cachedHeights] = new WeakMap();
-    this[_updateRAFToken] = undefined;
-    this[_emptySpaceSentinelContainer] =
+    this.#intersectionObserver =
+        new IntersectionObserver(this.#intersectionObserverCallback);
+    this.#mutationObserver =
+        new MutationObserver(this.#mutationObserverCallback);
+    this.#resizeObserver = new ResizeObserver(this.#resizeObserverCallback);
+    this.#cachedHeights = new WeakMap();
+    this.#updateRAFToken = undefined;
+    this.#emptySpaceSentinelContainer =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
-    this[_toShow] = new Set();
-    this[_intersectionObserver].observe(this);
+    this.#toShow = new Set();
+    this.#intersectionObserver.observe(this);
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
     // otherwise be seen by the observer.
-    this[_mutationObserverCallback]([{
+    this.#mutationObserverCallback([{
       type: 'childList',
       target: this,
       addedNodes: Array.from(this.childNodes),
@@ -105,7 +105,7 @@ export class VirtualContent extends HTMLElement {
       previousSibling: null,
       nextSibling: null,
     }]);
-    this[_mutationObserver].observe(this, {childList: true});
+    this.#mutationObserver.observe(this, {childList: true});
 
     // `capture: true` helps support the nested <virtual-content> case. (Which
     // is not yet officially supported, but we're trying.) In particular, this
@@ -115,7 +115,7 @@ export class VirtualContent extends HTMLElement {
     // invisible="", and thus it will be rendered (allowing us to accurately
     // measure its height, etc.)
     this.addEventListener(
-        'activateinvisible', this[_onActivateinvisible], {capture: true});
+        'activateinvisible', this.#onActivateinvisible, {capture: true});
   }
 
   ["short"](e) {
@@ -123,14 +123,14 @@ export class VirtualContent extends HTMLElement {
   }
 
   #showElement = (e) => {
-    this[_toShow].add(e);
+    this.#toShow.add(e);
     window.requestAnimationFrame(() => {
-      for (const e of this[_toShow]) {
+      for (const e of this.#toShow) {
         e.removeAttribute('invisible');
         e.displayLock.commit();
         console.log("unlocking", this.short(e));
       }
-      this[_toShow].clear();
+      this.#toShow.clear();
     });
   }
 
@@ -138,8 +138,8 @@ export class VirtualContent extends HTMLElement {
     e.setAttribute('invisible', '');
     e.displayLock.acquire({ timeout: Infinity, activatable: true });
     console.log("locking", this.short(e));
-    if (this[_toShow].has(e)) {
-      this[_toShow].remove(e);
+    if (this.#toShow.has(e)) {
+      this.#toShow.remove(e);
     }
   }
 
@@ -147,38 +147,38 @@ export class VirtualContent extends HTMLElement {
     for (const {target, isIntersecting} of entries) {
       // Update if the <virtual-content> has moved into or out of the viewport.
       if (target === this) {
-        this[_scheduleUpdate]();
+        this.#scheduleUpdate();
         break;
       }
 
       const targetParent = target.parentNode;
 
       // Update if an empty space sentinel has moved into the viewport.
-      if (targetParent === this[_emptySpaceSentinelContainer] &&
+      if (targetParent === this.#emptySpaceSentinelContainer &&
           isIntersecting) {
-        this[_scheduleUpdate]();
+        this.#scheduleUpdate();
         break;
       }
 
       // Update if a child has moved out of the viewport.
       if (targetParent === this && !isIntersecting) {
-        this[_scheduleUpdate]();
+        this.#scheduleUpdate();
         break;
       }
     }
   }
 
   #mutationObserverCallback = (records) => {
-    const estimatedHeights = this[_cachedHeights];
+    const estimatedHeights = this.#cachedHeights;
 
     for (const record of records) {
       for (const node of record.removedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           // Removed children should have be made visible again; they're no
           // longer under our control.
-          this[_resizeObserver].unobserve(node);
-          this[_intersectionObserver].unobserve(node);
-          this[_showElement](node);
+          this.#resizeObserver.unobserve(node);
+          this.#intersectionObserver.unobserve(node);
+          this.#showElement(node);
           estimatedHeights.delete(node);
         }
       }
@@ -192,7 +192,7 @@ export class VirtualContent extends HTMLElement {
           // [_update]() will remove invisible="" if it calculates that the
           // elements could be maybe in the viewport, at which point the
           // necessary ones will get rendered.
-          this[_hideElement](node);
+          this.#hideElement(node);
           estimatedHeights.set(node, DEFAULT_HEIGHT_ESTIMATE);
         } else {
           // Remove non-element children because we can't control their
@@ -208,11 +208,11 @@ export class VirtualContent extends HTMLElement {
       }
     }
 
-    this[_scheduleUpdate]();
+    this.#scheduleUpdate();
   }
 
   #resizeObserverCallback = () => {
-    this[_scheduleUpdate]();
+    this.#scheduleUpdate();
   }
 
   #onActivateinvisible = (e) => {
@@ -224,20 +224,20 @@ export class VirtualContent extends HTMLElement {
     while (child.parentNode !== this) {
       child = child.parentNode;
     }
-    this[_update](child);
+    this.#update(child);
   }
 
   #scheduleUpdate = () => {
-    if (this[_updateRAFToken] !== undefined)
+    if (this.#updateRAFToken !== undefined)
       return;
 
-    this[_updateRAFToken] = window.requestAnimationFrame(this[_update]);
+    this.#updateRAFToken = window.requestAnimationFrame(this.#update);
   }
 
   // TODO: this method is enormous. Split it up into several separate steps.
   // https://refactoring.guru/smells/long-method
   #update = (childToForceVisible) => {
-    this[_updateRAFToken] = undefined;
+    this.#updateRAFToken = undefined;
 
     const thisClientRect = this.getBoundingClientRect();
     // Don't read or store layout information if the <virtual-content> isn't in
@@ -246,7 +246,7 @@ export class VirtualContent extends HTMLElement {
         thisClientRect.left !== 0 || thisClientRect.width !== 0 ||
         thisClientRect.height !== 0;
 
-    const cachedHeights = this[_cachedHeights];
+    const cachedHeights = this.#cachedHeights;
     const getAndCacheHeightIfPossible = (child) => {
       if (isRenderable && !child.hasAttribute('invisible')) {
         const childClientRect = child.getBoundingClientRect();
@@ -274,7 +274,7 @@ export class VirtualContent extends HTMLElement {
     // an element was made visible (or start of the child list).
     let currentInvisibleRunHeight = 0;
     // The next empty space sentinel that should be reused, if any.
-    let nextEmptySpaceSentinel = this[_emptySpaceSentinelContainer].firstChild;
+    let nextEmptySpaceSentinel = this.#emptySpaceSentinelContainer.firstChild;
     // Inserts an empty space sentinel representing the last contiguous run of
     // invisible elements. Reuses already existing empty space sentinels, if
     // possible.
@@ -283,7 +283,7 @@ export class VirtualContent extends HTMLElement {
         let sentinel = nextEmptySpaceSentinel;
         if (nextEmptySpaceSentinel === null) {
           sentinel = document.createElement('div');
-          this[_emptySpaceSentinelContainer].appendChild(sentinel);
+          this.#emptySpaceSentinelContainer.appendChild(sentinel);
         }
         nextEmptySpaceSentinel = sentinel.nextSibling;
 
@@ -293,7 +293,7 @@ export class VirtualContent extends HTMLElement {
         console.log(`sentinel height ${currentInvisibleRunHeight}px`);
         sentinelStyle.height = `${currentInvisibleRunHeight}px`,
 
-        this[_intersectionObserver].observe(sentinel);
+        this.#intersectionObserver.observe(sentinel);
 
         currentInvisibleRunHeight = 0;
       }
@@ -320,9 +320,9 @@ export class VirtualContent extends HTMLElement {
 
       if (maybeInViewport || child === childToForceVisible) {
         if (child.hasAttribute('invisible')) {
-          this[_showElement](child);
-          this[_resizeObserver].observe(child);
-          this[_intersectionObserver].observe(child);
+          this.#showElement(child);
+          this.#resizeObserver.observe(child);
+          this.#intersectionObserver.observe(child);
 
           // Since we just flipped to be visible, we should recalculate the
           // height and update the cache.
@@ -352,17 +352,17 @@ export class VirtualContent extends HTMLElement {
           child.style.top = `${nextTop - renderedHeight}px`;
           renderedHeight += possiblyCachedHeight;
         } else {
-          this[_hideElement](child);
-          this[_resizeObserver].unobserve(child);
-          this[_intersectionObserver].unobserve(child);
+          this.#hideElement(child);
+          this.#resizeObserver.unobserve(child);
+          this.#intersectionObserver.unobserve(child);
 
           currentInvisibleRunHeight += possiblyCachedHeight;
         }
       } else {
         if (!child.hasAttribute('invisible')) {
-          this[_hideElement](child);
-          this[_resizeObserver].unobserve(child);
-          this[_intersectionObserver].unobserve(child);
+          this.#hideElement(child);
+          this.#resizeObserver.unobserve(child);
+          this.#intersectionObserver.unobserve(child);
         }
 
         currentInvisibleRunHeight += possiblyCachedHeight;
@@ -378,7 +378,7 @@ export class VirtualContent extends HTMLElement {
       const sentinel = nextEmptySpaceSentinel;
       nextEmptySpaceSentinel = sentinel.nextSibling;
 
-      this[_intersectionObserver].unobserve(sentinel);
+      this.#intersectionObserver.unobserve(sentinel);
       sentinel.remove();
     }
 
