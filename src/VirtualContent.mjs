@@ -70,17 +70,17 @@ export class VirtualContent extends HTMLElement {
     this.#hideElement = this.#hideElement.bind(this);
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
-
     shadowRoot.innerHTML = TEMPLATE;
+    this.#emptySpaceSentinelContainer =
+        shadowRoot.getElementById('emptySpaceSentinelContainer');
 
     this.#intersectionObserver =
         new IntersectionObserver(this.#intersectionObserverCallback);
     this.#mutationObserver =
         new MutationObserver(this.#mutationObserverCallback);
     this.#resizeObserver = new ResizeObserver(this.#resizeObserverCallback);
-    this.#emptySpaceSentinelContainer =
-        shadowRoot.getElementById('emptySpaceSentinelContainer');
     this.#intersectionObserver.observe(this);
+
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
     // otherwise be seen by the observer.
