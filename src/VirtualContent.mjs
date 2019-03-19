@@ -52,10 +52,14 @@ const TEMPLATE = `
   position: relative !important;
   contain: layout style
 }
+
+#outerContainer { contain: layout style }
 </style>
-<div id="innerContainer">
-  <div id="emptySpaceSentinelContainer"></div>
-  <slot></slot>
+<div id="outerContainer">
+  <div id="innerContainer">
+    <div id="emptySpaceSentinelContainer"></div>
+    <slot></slot>
+  </div>
 </div>
 `;
 
@@ -89,6 +93,11 @@ class Range {
   }
 }
 
+const LOCK_STATE_ACQUIRING = Symbol("LOCK_STATE_ACQUIRING");
+const LOCK_STATE_ACQUIRED = Symbol("LOCK_STATE_ACQUIRED");
+const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
+//const LOCK_STATE_COMMITTED = Symbol("LOCK_STATE_COMMITTED");
+
 export class VirtualContent extends HTMLElement {
   #sizes = new WeakMap();
   #target;
@@ -99,11 +108,13 @@ export class VirtualContent extends HTMLElement {
   #resizeObserver;
   // The inner container allows us to get the size of the scroller without
   // forcing layout of the containing doc.
+  #outerContainer;
   #innerContainer;
   #emptySpaceSentinelContainer;
 
   #innerRect;
-  #unlockedBounds = new Range(0, 0);
+  #revealedBounds = new Range(0, 0);
+  #lockState = new WeakMap();
   #toUnlock = new Set();
 
   #totalMeasuredSize = 0;
@@ -116,6 +127,8 @@ export class VirtualContent extends HTMLElement {
     shadowRoot.innerHTML = TEMPLATE;
     this.#emptySpaceSentinelContainer =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
+    this.#outerContainer =
+        shadowRoot.getElementById('outerContainer');
     this.#innerContainer =
         shadowRoot.getElementById('innerContainer');
     this.#innerRect = this.#innerContainer.getBoundingClientRect()
@@ -123,7 +136,7 @@ export class VirtualContent extends HTMLElement {
     this.#intersectionObserver =
         new IntersectionObserver(this.#intersectionObserverCallback);
     this.#mutationObserver =
-        new MutationObserver(this.mutationObserverCallback);
+        new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.#resizeObserver = new ResizeObserver(this.resizeObserverCallback);
     this.#intersectionObserver.observe(this);
 
@@ -149,6 +162,8 @@ export class VirtualContent extends HTMLElement {
     // measure its height, etc.)
     this.addEventListener(
         'activateinvisible', this.onActivateinvisible, {capture: true});
+
+    this.scheduleUpdate();
   }
 
   setTarget(offset) {
@@ -159,34 +174,43 @@ export class VirtualContent extends HTMLElement {
   update() {
     this.#updateRAFToken = undefined;
 
-    if (target === undefined) {
-      updateToInitial();
-    } else if (target.element) {
-      updateToElement(target);
+    if (this.#target === undefined) {
+      this.updateToInitial();
+    } else if (this.#target.element) {
+      this.updateToElement(this.#target);
     } else {
-      updateToOffset(target.offset);
+      this.updateToOffset(this.#target.offset);
+    }
+    let promises = [];
+    for (const element of this.#toUnlock) {
+      promises.add(this.unlockElement(element));
+    }
+    if (promises) {
+      Promise.all(promises).then(() => {this.update()});
     }
   }
 
   updateToInitial() {
-    this.displayLock.acquire();
-    try {
-      this.updateToInitialLocked();
-    } finally {
-      this.displayLock.commit();
-    }
+    this.#outerContainer.displayLock.acquire().then(() => {
+      try {
+        this.updateToInitialLocked();
+      } finally {
+        this.#outerContainer.displayLock.commit();
+      }
+    });
   }
 
-  getBounds(rect) {
+  rectToRange(rect) {
     // TODO: allow horizontal scrolling.
-    return Range(rect.y, rect.height);
+    return new Range(rect.y, rect.height);
   }
 
   updateToInitialLocked() {
-    let rect = innerContainer.getBoundingClientRect();
-    let scrollerBounds = this.getBounds(rect);
-    let uncovered = scrollerBounds.minus(this.revealedBounds);
+    let rect = this.#innerContainer.getBoundingClientRect();
+    let scrollerBounds = this.rectToRange(rect);
+    let uncovered = scrollerBounds.minus(this.#revealedBounds);
     for (const bounds of uncovered) {
+      DLOG("uncovered", uncovered);
       if (bounds) {
         this.tryRevealBounds(bounds);
       }
@@ -204,6 +228,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   requestReveal(element) {
+    DLOG("reveal", element);
     if (!element.displayLock.locked) {
       DLOG(element, "is already unlocked");
     }
@@ -249,11 +274,11 @@ export class VirtualContent extends HTMLElement {
 
   revealBoth(bounds) {
     let firstElement = this.firstChild;
-    let elements = findElements(firstElement, 0, bounds.low, /* lower */ false);
+    let elements = this.findElements(firstElement, 0, bounds.low, /* lower */ false);
     let startElement = elements ? elements[-1] : firstElement;
-    let elementsToReveal = findElements(startElement, bounds.low, bounds.high, /* lower */ false);
+    let elementsToReveal = this.findElements(startElement, bounds.low, bounds.high, /* lower */ false);
     for (const element of elementsToReveal) {
-      requestReveal(element);
+      this.requestReveal(element);
     }
   }
 
@@ -277,19 +302,6 @@ export class VirtualContent extends HTMLElement {
     this.#toShow.add(e);
     this.#toShow.add(e);
     this.#scheduleUpdate();
-    */
-  }
-
-  #hideElement = (e) => {
-    /*
-    this.#toShow.add(e);
-    this.#scheduleUpdate();
-    e.setAttribute('invisible', '');
-    e.displayLock.acquire({ timeout: Infinity, activatable: true });
-    console.log("locking", this.short(e));
-    if (this.#toShow.has(e)) {
-      this.#toShow.remove(e);
-    }
     */
   }
 
@@ -320,36 +332,57 @@ export class VirtualContent extends HTMLElement {
     */
   }
 
-  #removeElement = (e) => {
-    // Removed children should have be made visible again; they're no
-    // longer under our control.
-    this.#resizeObserver.unobserve(e);
-    this.#intersectionObserver.unobserve(e);
-    this.showElement(e);
-    estimatedHeights.delete(e);
+  unlockElement(element) {
+    const state = this.#lockState.get(element);
+    if (state === LOCK_STATE_ACQUIRED) {
+      this.#lockState.set(element, LOCK_STATE_COMMITTING);
+      return element.displayLock.updateAndCommit().then(
+          () => {this.#lockState.delete(element)});
+    } else {
+      DLOG(element, "while unlocking lock state", state);
+    }
   }
 
-  #addElement = (e) => {
+  removeElement(element) {
+    // Removed children should have be made visible again. We stop observing
+    // them for resize so we should discard any size info we have to them as it
+    // may become incorrect.
+    this.#resizeObserver.unobserve(element);
+    this.unlockElement(element);
+    this.#sizes.delete(element);
+  }
+
+  lockElement(element) {
+    const state = this.#lockState.get(element);
+    if (state === undefined) {
+      this.#lockState.set(element, LOCK_STATE_ACQUIRING);
+      return element.displayLock.acquire({ timeout: Infinity, activatable: true }).then(
+          () => {this.#lockState.set(element, LOCK_STATE_ACQUIRED)});
+    } else {
+      DLOG(element, "while locking lock state", state);
+    }
+  }
+
+  addElement(element) {
     // Added children should be invisible initially. We want to make them
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    // [_update]() will remove invisible="" if it calculates that the
-    // elements could be maybe in the viewport, at which point the
-    // necessary ones will get rendered.
-    this.hideElement(e);
+    this.lockElement(element);
+    this.#resizeObserver.observe(element);
   }
 
   mutationObserverCallback(records) {
     for (const record of records) {
       for (const node of record.removedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          this.#removeElement(node);
+          this.removeElement(node);
         }
       }
 
       for (const node of record.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
+          this.addElement(node);
         } else {
           // Remove non-element children because we can't control their
           // invisibility state or even prevent them from being rendered using
@@ -377,7 +410,7 @@ export class VirtualContent extends HTMLElement {
     if (this.#updateRAFToken !== undefined)
       return;
 
-    this.#updateRAFToken = window.requestAnimationFrame(this.update);
+    this.#updateRAFToken = window.requestAnimationFrame(() => {this.update()});
   }
 
 }
