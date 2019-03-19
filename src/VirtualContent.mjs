@@ -70,6 +70,9 @@ class Offset {
   }
 }
 
+// Represents a range of pixels, from |low| to |high|. |lowElement| if present
+// is an element having lowest edge equal to |low| and |highElement| if present
+// is an element having highest edge eqla to |high|.
 class Range {
   constructor(low, high, lowElement, highElement) {
     this.low = low;
@@ -84,12 +87,19 @@ class Range {
   minus(other) {
     let lowUncovered, highUncovered;
     if (this.low < other.low) {
-      lowUncovered = new Range(this.low, other.low, this.lowElement)
+      lowUncovered = new Range(this.low, other.low, this.lowElement,
+                               other.lowElement ? other.lowElement.previousElementSibling : null);
     }
     if (this.high > other.high) {
-      highUncovered = new Range(other.high, this.high, null, this.highElement)
+      highUncovered = new Range(other.high, this.high,
+                                other.highElement ? other.highElement.nextElementSibling : null,
+                                this.highElement);
     }
     return [lowUncovered, highUncovered];
+  }
+
+  getSize() {
+    return this.high - this.low;
   }
 }
 
@@ -103,6 +113,7 @@ export class VirtualContent extends HTMLElement {
   #target;
   #toShow = new Set();
   #updateRAFToken;
+  #postUpdateNeeded = false;
   #intersectionObserver;
   #mutationObserver;
   #resizeObserver;
@@ -113,9 +124,15 @@ export class VirtualContent extends HTMLElement {
   #emptySpaceSentinelContainer;
 
   #innerRect;
-  #revealedBounds = new Range(0, 0);
+  #scrollerBounds;
+  #revealedBounds;
   #lockState = new WeakMap();
   #toUnlock = new Set();
+  #justUnlocked = new Set();
+
+  #elements = new WeakSet();
+  #locking = new Set();
+  #unlocking = new Set();
 
   #totalMeasuredSize = 0;
   #measuredCount = 0;
@@ -167,13 +184,26 @@ export class VirtualContent extends HTMLElement {
   }
 
   setTarget(offset) {
-    this.targetOffset(offset);
+    this.#target = offset;
     this.scheduleUpdate();
   }
 
   update() {
     this.#updateRAFToken = undefined;
 
+    if (postUpdateNeeded) {
+      console.warning("Update reached while postUpdateNeeded");
+      this.scheduleUpdate();
+      return;
+    }
+
+    console.log("update");
+    if (this.#locking.size || this.#unlocking.size) {
+      console.log("update bail");
+      return;
+    }
+
+    console.log("update continue");
     if (this.#target === undefined) {
       this.updateToInitial();
     } else if (this.#target.element) {
@@ -183,21 +213,58 @@ export class VirtualContent extends HTMLElement {
     }
     let promises = [];
     for (const element of this.#toUnlock) {
-      promises.add(this.unlockElement(element));
+      promises.push(this.unlockElement(element));
     }
-    if (promises) {
-      Promise.all(promises).then(() => {this.update()});
+    this.#toUnlock.clear();
+    Promise.all(promises).then(() => {this.schedulePostUpdate()});
+  }
+
+  schedulePostUpdate() {
+    postUpdateNeeded = true;
+    setTimeout(() => {this.postUpdate()}, 0);
+  }
+
+  postUpdate() {
+    postUpdateNeeded = false;
+    DLOG("postUpdate");
+    for (const element of this.#justUnlocked) {
+      this.measure(element);
     }
   }
 
+  measure(element) {
+    let oldSize = this.#sizes.get(element);
+    if (oldSize === undefined) {
+      oldSize = 0;
+      this.#measuredCount++;
+    }
+    let newSize = element.clientHeight;
+    this.#totalMeasuredSize += newSize - oldSize;
+    this.#sizes.set(element, newSize);
+  }
+
+  getScrollerBounds() {
+    if (!this.#scrollerBounds) {
+      let rect = this.getBoundingClientRect();
+      this.#scrollerBounds = this.rectToRange(rect);
+    }
+    return this.#scrollerBounds;
+  }
+
   updateToInitial() {
-    this.#outerContainer.displayLock.acquire().then(() => {
-      try {
-        this.updateToInitialLocked();
-      } finally {
-        this.#outerContainer.displayLock.commit();
+    if (!this.childNodes.length) {
+      return;
+    }
+    this.requestReveal(this.firstChild);
+    this.#revealedBounds = new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
+    let toReveal = this.getScrollerBounds().minus(this.#revealedBounds);
+    DLOG("toReveal", toReveal);
+    for (const bounds of toReveal) {
+      if (bounds) {
+        this.tryRevealBounds(bounds);
       }
-    });
+    }
+    this.#target = new Offset(this.firstChild, 0);
   }
 
   rectToRange(rect) {
@@ -205,67 +272,55 @@ export class VirtualContent extends HTMLElement {
     return new Range(rect.y, rect.height);
   }
 
-  updateToInitialLocked() {
-    let rect = this.#innerContainer.getBoundingClientRect();
-    let scrollerBounds = this.rectToRange(rect);
-    let uncovered = scrollerBounds.minus(this.#revealedBounds);
-    for (const bounds of uncovered) {
-      DLOG("uncovered", uncovered);
-      if (bounds) {
-        this.tryRevealBounds(bounds);
-      }
-    }
-  }
-
   tryRevealBounds(bounds) {
     if (bounds.lowElement) {
-      this.revealLower(bounds);
-    } else if (bounds.highElement) {
       this.revealHigher(bounds);
+    } else if (bounds.highElement) {
+      this.revealLower(bounds);
     } else {
       this.revealBoth(bounds);
     }
   }
 
   requestReveal(element) {
-    DLOG("reveal", element);
     if (!element.displayLock.locked) {
-      DLOG(element, "is already unlocked");
+      console.log(element, "is already unlocked");
     }
     this.#toUnlock.add(element);
   }
 
   revealLower(bounds) {
-    revealDirection(bounds, /* lower */ true);
+    this.revealDirection(bounds, /* lower */ true);
   }
 
   revealHigher(bounds) {
-    revealDirection(bounds, /* lower */ false);
+    this.revealDirection(bounds, /* lower */ false);
   }
 
   revealDirection(bounds, lower) {
-    let element = lower ? bounds.lowElement : bounds.highElement;
-    let rect = startElement.getBoundingClientRect();
-    let edge = lower ? rect.y : - (rect.y + rect.height);
-    let limit = lower ? bounds.low : - bounds.high;
-    for (const element of findElements(element, edge, limit, lower)) {
-      requestReveal(element);
+    let startElement = lower ? bounds.highElement : bounds.lowElement;
+    let pixelsNeeded = bounds.high - bounds.low - this.getSize(startElement);
+    for (const element of this.findElements(startElement, pixelsNeeded, lower)) {
+      this.requestReveal(element);
     }
   }
 
-  findElements(element, edge, limit, lower) {
+  findElements(element, pixelsNeeded, lower) {
+    console.log("element", element);
     let elements = [];
-    while (edge > limit) {
-      element = lower ? element.previousChild : element.nextChild;
+    while (pixelsNeeded > 0) {
       elements.push(element);
-      edge -= getSize(element)
+      pixelsNeeded -= this.getSize(element)
+      element = lower ? element.previousElementSibling : element.nextElementSibling;
+      console.log("element", element);
+      console.log("pixelsNeeded", pixelsNeeded);
     }
     return elements;
   }
 
   getSize(element) {
     let size = this.#sizes.get(element);
-    return size === undefined ? getAverageSize() : size;
+    return size === undefined ? this.getAverageSize() : size;
   }
 
   getAverageSize() {
@@ -274,9 +329,9 @@ export class VirtualContent extends HTMLElement {
 
   revealBoth(bounds) {
     let firstElement = this.firstChild;
-    let elements = this.findElements(firstElement, 0, bounds.low, /* lower */ false);
+    let elements = this.findElements(firstElement, bounds.low, /* lower */ false);
     let startElement = elements ? elements[-1] : firstElement;
-    let elementsToReveal = this.findElements(startElement, bounds.low, bounds.high, /* lower */ false);
+    let elementsToReveal = this.findElements(startElement, bounds.getSize(), /* lower */ false);
     for (const element of elementsToReveal) {
       this.requestReveal(element);
     }
@@ -336,8 +391,16 @@ export class VirtualContent extends HTMLElement {
     const state = this.#lockState.get(element);
     if (state === LOCK_STATE_ACQUIRED) {
       this.#lockState.set(element, LOCK_STATE_COMMITTING);
+      this.#unlocking.add(element);
       return element.displayLock.updateAndCommit().then(
-          () => {this.#lockState.delete(element)});
+          () => {
+            this.#lockState.delete(element);
+            this.#unlocking.delete(element);
+            if (this.#elements.has(element)) {
+              this.#justUnlocked.add(element);
+              this.scheduleUpdate();
+            }
+          });
     } else {
       DLOG(element, "while unlocking lock state", state);
     }
@@ -350,14 +413,25 @@ export class VirtualContent extends HTMLElement {
     this.#resizeObserver.unobserve(element);
     this.unlockElement(element);
     this.#sizes.delete(element);
+    this.#elements.delete(element);
   }
 
   lockElement(element) {
     const state = this.#lockState.get(element);
     if (state === undefined) {
       this.#lockState.set(element, LOCK_STATE_ACQUIRING);
+      this.#locking.add(element);
+      console.log("acquiring", element);
       return element.displayLock.acquire({ timeout: Infinity, activatable: true }).then(
-          () => {this.#lockState.set(element, LOCK_STATE_ACQUIRED)});
+          () => {
+            // console.log("acquired", element);
+            // console.log("locked", element.displayLock.locked);
+            this.#lockState.set(element, LOCK_STATE_ACQUIRED);
+            this.#locking.delete(element);
+            if (this.#elements.has(element)) {
+              this.scheduleUpdate();
+            }
+          });
     } else {
       DLOG(element, "while locking lock state", state);
     }
@@ -368,8 +442,9 @@ export class VirtualContent extends HTMLElement {
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    this.lockElement(element);
+    this.#elements.add(element);
     this.#resizeObserver.observe(element);
+    return this.lockElement(element);
   }
 
   mutationObserverCallback(records) {
