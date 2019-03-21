@@ -126,6 +126,8 @@ export class VirtualContent extends HTMLElement {
   #innerRect;
   #scrollerBounds;
   #revealedBounds;
+  #attemptedRevealedBounds;
+
   #lockState = new WeakMap();
   #toUnlock = new Set();
   #justUnlocked = new Set();
@@ -152,8 +154,8 @@ export class VirtualContent extends HTMLElement {
 
     this.#intersectionObserver =
         new IntersectionObserver(this.#intersectionObserverCallback);
-    this.#mutationObserver =
-        new MutationObserver((records) => {this.mutationObserverCallback(records)});
+
+    new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.#resizeObserver = new ResizeObserver(this.resizeObserverCallback);
     this.#intersectionObserver.observe(this);
 
@@ -183,6 +185,10 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
+  appendChild(child) {
+    
+  }
+
   setTarget(offset) {
     this.#target = offset;
     this.scheduleUpdate();
@@ -191,7 +197,7 @@ export class VirtualContent extends HTMLElement {
   update() {
     this.#updateRAFToken = undefined;
 
-    if (postUpdateNeeded) {
+    if (this.#postUpdateNeeded) {
       console.warning("Update reached while postUpdateNeeded");
       this.scheduleUpdate();
       return;
@@ -220,12 +226,12 @@ export class VirtualContent extends HTMLElement {
   }
 
   schedulePostUpdate() {
-    postUpdateNeeded = true;
+    this.#postUpdateNeeded = true;
     setTimeout(() => {this.postUpdate()}, 0);
   }
 
   postUpdate() {
-    postUpdateNeeded = false;
+    this.#postUpdateNeeded = false;
     DLOG("postUpdate");
     for (const element of this.#justUnlocked) {
       this.measure(element);
