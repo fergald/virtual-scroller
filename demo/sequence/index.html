@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<style>
+  virtual-content:not(:defined) { display: none }
+</style>
+
+<script type="module">
+import '../../src/virtual-content.mjs';
+
+  let populate = () => {
+      const virtualContent = document.querySelector('virtual-content');
+      const template = document.getElementById('MAIN_TEMPLATE');
+
+      virtualContent.appendChild(template.content);
+  };
+//  populate();
+  customElements.whenDefined('virtual-content').then(async () => {populate()});
+</script>
+  <virtual-content id=vc></virtual-content>
+<template id="MAIN_TEMPLATE">
+  <p id=p1>1
+  <p id=p2>2
+  <p id=p3>3
+  <p id=p4>4
+  <p id=p5>5
+  <p id=p6>6
+  <p id=p7>7
+  <p id=p8>8
+  <p id=p9>9
+  <p id=p10>10
+  <p id=p11>11
+  <p id=p12>12
+  <p id=p13>13
+  <p id=p14>14
+  <p id=p15>15
+  <p id=p16>16
+  <p id=p17>17
+  <p id=p18>18
+  <p id=p19>19
+  <p id=p20>20
+  <p id=p21>21
+  <p id=p22>22
+  <p id=p23>23
+  <p id=p24>24
+  <p id=p25>25
+  <p id=p26>26
+  <p id=p27>27
+  <p id=p28>28
+  <p id=p29>29
+  <p id=p30>30
+  <p id=p31>31
+  <p id=p32>32
+  <p id=p33>33
+  <p id=p34>34
+  <p id=p35>35
+  <p id=p36>36
+  <p id=p37>37
+  <p id=p38>38
+  <p id=p39>39
+</template>
