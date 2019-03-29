@@ -1,0 +1,132 @@
+<div style="position: fixed; left: 100px; top:0px; font-size: 50">
+  <div>
+    RAFs in last second: <span id=rafCount></span>
+  </div>
+  <div>
+    observe:
+    <input id=observeCheckI checked onchange="observeCheck()" type=checkbox>
+    elements: <input id=elementCountI value=1000 onchange="elementCount()">
+  </div>
+</div>
+<div id=target>
+</div>
+
+<script>
+  let observer = new IntersectionObserver(observerCallback, {});    
+
+  // A circular buffer that lets you track times of events and how
+  // many you have had in the last interval.
+  class PerInterval {
+    constructor(interval, max) {
+      this.interval = interval;
+      this.max = max;
+      this.count = 0;
+      this.newestI = 0;
+      this.buffer = new Array(self.max);
+      while (this.count < this.max) {
+        // console.log(this.count);
+        this.appendAndClean();
+      }
+    }
+
+    getNewest() {
+      return this.count ? this.buffer[this.newestI] : null;
+    }
+
+    getIndex(i) {
+      return (i + this.max) % this.max
+    }
+
+    getOldest() {
+      return this.count ?
+        this.buffer[this.getIndex(this.newestI - this.count + 1)] :
+        null;
+    }
+
+    removeOldest() {
+      if (this.count == 0) {
+        throw "Cannot remove, empty";
+      }
+      this.count--;
+    }
+
+    appendAndClean() {
+      let t = performance.now()/1000;
+      this.append(t);
+      this.clean(t);
+    }
+
+    append(t) {
+      this.newestI = this.getIndex(this.newestI + 1)
+      this.buffer[this.newestI] = t;
+      if (this.count != this.max) {
+        this.count++;
+      }
+    }
+
+    // Removes any events older than the interval limit.
+    clean(t) {
+      while (t - this.getOldest() > this.interval) {
+        this.removeOldest();
+      }
+    }
+  }
+
+  function observerCallback(entries) {
+    console.log("obs", entries.length);
+  }
+
+  function createElement(size, text) {
+    let e = document.createElement("div");
+    e.innerText = text;
+    e.style.width = size[0];
+    e.style.height = size[1];
+    return e;
+  }
+
+  function replaceElements(count) {
+    observe(false);
+    target.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      let child = createElement([300, 100], String(i));
+      target.appendChild(child);
+    }    
+  }
+
+  let intervals = new PerInterval(1, 60);
+  function rafCallback() {
+    intervals.appendAndClean();
+    rafCount.innerText = String(intervals.count);
+    // console.log("raf", intervals.count);
+    // console.log("min", minRaf);
+    //console.log("raf", performance.now()/1000);
+    requestAnimationFrame(rafCallback);
+  }
+  // Control whether observing is on or off.
+  function observe(onOff) {
+    for (const child of target.children) {
+      if (onOff) {
+        observer.observe(child);
+      } else {
+        observer.unobserve(child);
+      }
+    }
+  }
+
+  // React to changed in the element count input.
+  function elementCount() {
+    replaceElements(elementCountI.value);
+    observeCheck();
+  }
+
+  // React to changed in the observe checkbox input.
+  function observeCheck() {
+    console.log(observeCheckI.checked);
+    observe(observeCheckI.checked);
+  }
+
+
+  // Setup and get going.
+  setTimeout(rafCallback, 0);
+  elementCount();
+</script>
