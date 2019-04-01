@@ -194,7 +194,7 @@ export class VirtualContent extends HTMLElement {
     this.#updateRAFToken = undefined;
 
     if (this.#postUpdateNeeded) {
-      console.warning("Update reached while postUpdateNeeded");
+      console.warn("Update reached while postUpdateNeeded");
       this.scheduleUpdate();
       return;
     }
