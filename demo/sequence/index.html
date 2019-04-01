@@ -4,7 +4,7 @@
 </style>
 
 <script type="module">
-import '../../src/virtual-content.mjs';
+  import '../../src/virtual-content.mjs';
 
   let populate = () => {
       const virtualContent = document.querySelector('virtual-content');
@@ -12,8 +12,8 @@ import '../../src/virtual-content.mjs';
 
       virtualContent.appendChild(template.content);
   };
-//  populate();
-  customElements.whenDefined('virtual-content').then(async () => {populate()});
+  populate();
+//  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
   <virtual-content id=vc></virtual-content>
 <template id="MAIN_TEMPLATE">

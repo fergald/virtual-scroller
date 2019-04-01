@@ -155,7 +155,7 @@ export class VirtualContent extends HTMLElement {
     this.#intersectionObserver =
         new IntersectionObserver(this.#intersectionObserverCallback);
 
-    new MutationObserver((records) => {this.mutationObserverCallback(records)});
+    this.#mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.#resizeObserver = new ResizeObserver(this.resizeObserverCallback);
     this.#intersectionObserver.observe(this);
 
@@ -183,10 +183,6 @@ export class VirtualContent extends HTMLElement {
         'activateinvisible', this.onActivateinvisible, {capture: true});
 
     this.scheduleUpdate();
-  }
-
-  appendChild(child) {
-    
   }
 
   setTarget(offset) {
