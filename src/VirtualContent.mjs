@@ -112,57 +112,57 @@ const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
 //const LOCK_STATE_COMMITTED = Symbol("LOCK_STATE_COMMITTED");
 
 export class VirtualContent extends HTMLElement {
-  #sizes = new WeakMap();
-  #target;
-  #toShow = new Set();
-  #updateRAFToken;
-  #postUpdateNeeded = false;
-  #intersectionObserver;
-  #mutationObserver;
-  #resizeObserver;
+  sizes = new WeakMap();
+  target;
+  toShow = new Set();
+  updateRAFToken;
+  postUpdateNeeded = false;
+  intersectionObserver;
+  mutationObserver;
+  resizeObserver;
   // The inner container allows us to get the size of the scroller without
   // forcing layout of the containing doc.
-  #outerContainer;
-  #innerContainer;
-  #emptySpaceSentinelContainer;
+  outerContainer;
+  innerContainer;
+  emptySpaceSentinelContainer;
 
-  #innerRect;
-  #scrollerBounds;
-  #revealedBounds;
-  #attemptedRevealedBounds;
+  innerRect;
+  scrollerBounds;
+  revealedBounds;
+  attemptedRevealedBounds;
 
-  #lockState = new WeakMap();
-  #toUnlock = new Set();
-  #justUnlocked = new Set();
+  lockState = new WeakMap();
+  toUnlock = new Set();
+  justUnlocked = new Set();
 
-  #elements = new WeakSet();
-  #locking = new Set();
-  #unlocking = new Set();
+  elements = new WeakSet();
+  locking = new Set();
+  unlocking = new Set();
 
-  #totalMeasuredSize = 0;
-  #measuredCount = 0;
+  totalMeasuredSize = 0;
+  measuredCount = 0;
 
-  #empty = true;
+  empty = true;
   
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
-    this.#emptySpaceSentinelContainer =
+    this.emptySpaceSentinelContainer =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
-    this.#outerContainer =
+    this.outerContainer =
         shadowRoot.getElementById('outerContainer');
-    this.#innerContainer =
+    this.innerContainer =
       shadowRoot.getElementById('innerContainer');
-    this.#innerRect = this.#innerContainer.getBoundingClientRect()
+    this.innerRect = this.innerContainer.getBoundingClientRect()
 
-    this.#intersectionObserver =
-        new IntersectionObserver(this.#intersectionObserverCallback);
+    this.intersectionObserver =
+        new IntersectionObserver(this.intersectionObserverCallback);
 
-    this.#mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
-    this.#resizeObserver = new ResizeObserver(this.resizeObserverCallback);
-    this.#intersectionObserver.observe(this);
+    this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
+    this.resizeObserver = new ResizeObserver(this.resizeObserverCallback);
+    this.intersectionObserver.observe(this);
 
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
@@ -175,7 +175,7 @@ export class VirtualContent extends HTMLElement {
       previousSibling: null,
       nextSibling: null,
     }]);
-    this.#mutationObserver.observe(this, {childList: true});
+    this.mutationObserver.observe(this, {childList: true});
 
     // `capture: true` helps support the nested <virtual-content> case. (Which
     // is not yet officially supported, but we're trying.) In particular, this
@@ -191,7 +191,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   setTarget(offset) {
-    this.#target = offset;
+    this.target = offset;
     this.scheduleUpdate();
   }
 
@@ -199,16 +199,16 @@ export class VirtualContent extends HTMLElement {
     console.log("sync");
 
     if (!this.childNodes.length) {
-      this.#empty = true;
+      this.empty = true;
       return;
     }
 
-    if (this.#empty) {
+    if (this.empty) {
       this.revealFirstChild();
     }
 
     while (true) {
-      let toReveal = this.getScrollerBounds().minus(this.#revealedBounds);
+      let toReveal = this.getScrollerBounds().minus(this.revealedBounds);
       DLOG("toReveal", toReveal);
       if (!toReveal) {
         break;
@@ -219,39 +219,39 @@ export class VirtualContent extends HTMLElement {
         }
       }
     }
-    this.#empty = false;
+    this.empty = false;
   }
 
   measure(element) {
-    let oldSize = this.#sizes.get(element);
+    let oldSize = this.sizes.get(element);
     if (oldSize === undefined) {
       oldSize = 0;
-      this.#measuredCount++;
+      this.measuredCount++;
     }
     let newSize = element.clientHeight;
-    this.#totalMeasuredSize += newSize - oldSize;
-    this.#sizes.set(element, newSize);
+    this.totalMeasuredSize += newSize - oldSize;
+    this.sizes.set(element, newSize);
   }
 
   getScrollerBounds() {
-    if (!this.#scrollerBounds) {
+    if (!this.scrollerBounds) {
       let rect = this.getBoundingClientRect();
-      this.#scrollerBounds = this.rectToRange(rect);
+      this.scrollerBounds = this.rectToRange(rect);
     }
-    return this.#scrollerBounds;
+    return this.scrollerBounds;
   }
 
   revealFirstChild() {
     this.requestReveal(this.firstChild);
-    this.#revealedBounds = new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
-    let toReveal = this.getScrollerBounds().minus(this.#revealedBounds);
+    this.revealedBounds = new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
+    let toReveal = this.getScrollerBounds().minus(this.revealedBounds);
     DLOG("toReveal", toReveal);
     for (const bounds of toReveal) {
       if (bounds) {
         this.tryRevealBounds(bounds);
       }
     }
-    this.#target = new Offset(0);
+    this.target = new Offset(0);
   }
 
   rectToRange(rect) {
@@ -343,7 +343,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   getSize(element) {
-    let size = this.#sizes.get(element);
+    let size = this.sizes.get(element);
     return size === undefined ? this.getAverageSize() : size;
   }
 
@@ -363,7 +363,7 @@ export class VirtualContent extends HTMLElement {
 
   getScrollerHeight() {
     const numElements = this.children.length;
-    return this.#totalMeasuredSize + (numElements - this.#measuredCount) * getAverageSize();
+    return this.totalMeasuredSize + (numElements - this.measuredCount) * getAverageSize();
   }
 
   updateToOffset(offset) {
@@ -376,35 +376,35 @@ export class VirtualContent extends HTMLElement {
     return e.innerText.substr(0, 3);
   }
 
-  #showElement = (e) => {
+  showElement = (e) => {
     /*
-    this.#toShow.add(e);
-    this.#toShow.add(e);
-    this.#scheduleUpdate();
+    this.toShow.add(e);
+    this.toShow.add(e);
+    this.scheduleUpdate();
     */
   }
 
-  #intersectionObserverCallback = (entries) => {
+  intersectionObserverCallback = (entries) => {
     /*
     for (const {target, isIntersecting} of entries) {
       // Update if the <virtual-content> has moved into or out of the viewport.
       if (target === this) {
-        this.#scheduleUpdate();
+        this.scheduleUpdate();
         break;
       }
 
       const targetParent = target.parentNode;
 
       // Update if an empty space sentinel has moved into the viewport.
-      if (targetParent === this.#emptySpaceSentinelContainer &&
+      if (targetParent === this.emptySpaceSentinelContainer &&
           isIntersecting) {
-        this.#scheduleUpdate();
+        this.scheduleUpdate();
         break;
       }
 
       // Update if a child has moved out of the viewport.
       if (targetParent === this && !isIntersecting) {
-        this.#scheduleUpdate();
+        this.scheduleUpdate();
         break;
       }
     }
@@ -412,16 +412,16 @@ export class VirtualContent extends HTMLElement {
   }
 
   unlockElement(element) {
-    const state = this.#lockState.get(element);
+    const state = this.lockState.get(element);
     if (state === LOCK_STATE_ACQUIRED) {
-      this.#lockState.set(element, LOCK_STATE_COMMITTING);
-      this.#unlocking.add(element);
+      this.lockState.set(element, LOCK_STATE_COMMITTING);
+      this.unlocking.add(element);
       return element.displayLock.updateAndCommit().then(
           () => {
-            this.#lockState.delete(element);
-            this.#unlocking.delete(element);
-            if (this.#elements.has(element)) {
-              this.#justUnlocked.add(element);
+            this.lockState.delete(element);
+            this.unlocking.delete(element);
+            if (this.elements.has(element)) {
+              this.justUnlocked.add(element);
               this.scheduleUpdate();
             }
           });
@@ -434,25 +434,25 @@ export class VirtualContent extends HTMLElement {
     // Removed children should have be made visible again. We stop observing
     // them for resize so we should discard any size info we have to them as it
     // may become incorrect.
-    this.#resizeObserver.unobserve(element);
+    this.resizeObserver.unobserve(element);
     this.unlockElement(element);
-    this.#sizes.delete(element);
-    this.#elements.delete(element);
+    this.sizes.delete(element);
+    this.elements.delete(element);
   }
 
   lockElement(element) {
-    const state = this.#lockState.get(element);
+    const state = this.lockState.get(element);
     if (state === undefined) {
-      this.#lockState.set(element, LOCK_STATE_ACQUIRING);
-      this.#locking.add(element);
+      this.lockState.set(element, LOCK_STATE_ACQUIRING);
+      this.locking.add(element);
       console.log("acquiring", element);
       return element.displayLock.acquire({ timeout: Infinity, activatable: true }).then(
           () => {
             // console.log("acquired", element);
             // console.log("locked", element.displayLock.locked);
-            this.#lockState.set(element, LOCK_STATE_ACQUIRED);
-            this.#locking.delete(element);
-            if (this.#elements.has(element)) {
+            this.lockState.set(element, LOCK_STATE_ACQUIRED);
+            this.locking.delete(element);
+            if (this.elements.has(element)) {
               this.scheduleUpdate();
             }
           });
@@ -466,8 +466,8 @@ export class VirtualContent extends HTMLElement {
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    this.#elements.add(element);
-    this.#resizeObserver.observe(element);
+    this.elements.add(element);
+    this.resizeObserver.observe(element);
     return this.lockElement(element);
   }
 
@@ -496,7 +496,7 @@ export class VirtualContent extends HTMLElement {
       }
     }
 
-//    this.#scheduleUpdate();
+//    this.scheduleUpdate();
   }
 
   resizeObserverCallback() {
@@ -506,11 +506,11 @@ export class VirtualContent extends HTMLElement {
   }
 
   scheduleUpdate() {
-    if (this.#updateRAFToken !== undefined)
+    if (this.updateRAFToken !== undefined)
       return;
 
-    this.#updateRAFToken = window.requestAnimationFrame(() => {
-      this.#updateRAFToken = undefined;
+    this.updateRAFToken = window.requestAnimationFrame(() => {
+      this.updateRAFToken = undefined;
       this.sync();
     });
   }
