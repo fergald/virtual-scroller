@@ -1,4 +1,5 @@
-const DEBUG = true;
+const DEBUG = false;
+const COLOUR = true;
 
 function DLOG(...messages) {
   if (!DEBUG) {
@@ -63,6 +64,8 @@ const TEMPLATE = `
 </div>
 `;
 
+// Represents an offset for the scroller. Can be either an pixel
+// offset or an element.
 class Offset {
   constructor(offset, element) {
     this.offset = offset;
@@ -72,7 +75,7 @@ class Offset {
 
 // Represents a range of pixels, from |low| to |high|. |lowElement| if present
 // is an element having lowest edge equal to |low| and |highElement| if present
-// is an element having highest edge eqla to |high|.
+// is an element having highest edge equal to |high|.
 class Range {
   constructor(low, high, lowElement, highElement) {
     this.low = low;
@@ -85,17 +88,17 @@ class Range {
   // other:    ------
   // result: --      ---
   minus(other) {
-    let lowUncovered, highUncovered;
+    let result = [];
     if (this.low < other.low) {
-      lowUncovered = new Range(this.low, other.low, this.lowElement,
-                               other.lowElement ? other.lowElement.previousElementSibling : null);
+      result.push(new Range(this.low, other.low, this.lowElement,
+                            other.lowElement ? other.lowElement.previousElementSibling : null));
     }
     if (this.high > other.high) {
-      highUncovered = new Range(other.high, this.high,
-                                other.highElement ? other.highElement.nextElementSibling : null,
-                                this.highElement);
+      result.push(new Range(other.high, this.high,
+                            other.highElement ? other.highElement.nextElementSibling : null,
+                            this.highElement));
     }
-    return [lowUncovered, highUncovered];
+    return result;
   }
 
   getSize() {
@@ -139,6 +142,8 @@ export class VirtualContent extends HTMLElement {
   #totalMeasuredSize = 0;
   #measuredCount = 0;
 
+  #empty = true;
+  
   constructor() {
     super();
 
@@ -149,7 +154,7 @@ export class VirtualContent extends HTMLElement {
     this.#outerContainer =
         shadowRoot.getElementById('outerContainer');
     this.#innerContainer =
-        shadowRoot.getElementById('innerContainer');
+      shadowRoot.getElementById('innerContainer');
     this.#innerRect = this.#innerContainer.getBoundingClientRect()
 
     this.#intersectionObserver =
@@ -190,48 +195,31 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
-  update() {
-    this.#updateRAFToken = undefined;
+  sync() {
+    console.log("sync");
 
-    if (this.#postUpdateNeeded) {
-      console.warn("Update reached while postUpdateNeeded");
-      this.scheduleUpdate();
+    if (!this.childNodes.length) {
+      this.#empty = true;
       return;
     }
 
-    console.log("update");
-    if (this.#locking.size || this.#unlocking.size) {
-      console.log("update bail");
-      return;
+    if (this.#empty) {
+      this.revealFirstChild();
     }
 
-    console.log("update continue");
-    if (this.#target === undefined) {
-      this.updateToInitial();
-    } else if (this.#target.element) {
-      this.updateToElement(this.#target);
-    } else {
-      this.updateToOffset(this.#target.offset);
+    while (true) {
+      let toReveal = this.getScrollerBounds().minus(this.#revealedBounds);
+      DLOG("toReveal", toReveal);
+      if (!toReveal) {
+        break;
+      }
+      for (const bounds of toReveal) {
+        if (bounds) {
+          this.tryRevealBounds(bounds);
+        }
+      }
     }
-    let promises = [];
-    for (const element of this.#toUnlock) {
-      promises.push(this.unlockElement(element));
-    }
-    this.#toUnlock.clear();
-    Promise.all(promises).then(() => {this.schedulePostUpdate()});
-  }
-
-  schedulePostUpdate() {
-    this.#postUpdateNeeded = true;
-    setTimeout(() => {this.postUpdate()}, 0);
-  }
-
-  postUpdate() {
-    this.#postUpdateNeeded = false;
-    DLOG("postUpdate");
-    for (const element of this.#justUnlocked) {
-      this.measure(element);
-    }
+    this.#empty = false;
   }
 
   measure(element) {
@@ -253,10 +241,7 @@ export class VirtualContent extends HTMLElement {
     return this.#scrollerBounds;
   }
 
-  updateToInitial() {
-    if (!this.childNodes.length) {
-      return;
-    }
+  revealFirstChild() {
     this.requestReveal(this.firstChild);
     this.#revealedBounds = new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
     let toReveal = this.getScrollerBounds().minus(this.#revealedBounds);
@@ -266,7 +251,7 @@ export class VirtualContent extends HTMLElement {
         this.tryRevealBounds(bounds);
       }
     }
-    this.#target = new Offset(this.firstChild, 0);
+    this.#target = new Offset(0);
   }
 
   rectToRange(rect) {
@@ -284,11 +269,42 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  requestReveal(element) {
-    if (!element.displayLock.locked) {
-      console.log(element, "is already unlocked");
+  getRevealed(element) {
+    return COLOUR ?
+      element.style.color == "red" :
+      element.displayLock.locked;
+  }
+
+  reveal(element) {
+    if (COLOUR) {
+      element.style.color =r "green";
+    } else {
+      element.displayLock.commit();
     }
-    this.#toUnlock.add(element);
+  }
+
+  hide(element) {
+    if (COLOUR) {
+      element.style.color =r "red";
+    } else {
+      element.displayLock.acquire({ timeout: Infinity, activatable: true });
+    }
+  }
+
+  requestReveal(element) {
+    if (this.getRevealed(element)) {
+      console.log(element, "is already unlocked");
+    } else {
+      this.reveal(element);
+    }
+  }
+
+  requestHide(element) {
+    if (!this.getRevealed(element)) {
+      console.log(element, "is already locked");
+    } else {
+      this.hide(element);
+    }
   }
 
   revealLower(bounds) {
@@ -299,11 +315,17 @@ export class VirtualContent extends HTMLElement {
     this.revealDirection(bounds, /* lower */ false);
   }
 
+  nextElement(element, lower) {
+    return lower ? element.previousElementSibling : element.nextElementSibling;
+  }
+
   revealDirection(bounds, lower) {
-    let startElement = lower ? bounds.highElement : bounds.lowElement;
-    let pixelsNeeded = bounds.high - bounds.low - this.getSize(startElement);
-    for (const element of this.findElements(startElement, pixelsNeeded, lower)) {
+    let element = lower ? bounds.highElement : bounds.lowElement;
+    let pixelsNeeded = bounds.high - bounds.low - this.getSize(element);
+    while (pixelsNeeded > 0) {
+      element = this.nextElement(element, lower);
       this.requestReveal(element);
+      pixelsNeeded -= this.getSize(element);
     }
   }
 
@@ -487,7 +509,10 @@ export class VirtualContent extends HTMLElement {
     if (this.#updateRAFToken !== undefined)
       return;
 
-    this.#updateRAFToken = window.requestAnimationFrame(() => {this.update()});
+    this.#updateRAFToken = window.requestAnimationFrame(() => {
+      this.#updateRAFToken = undefined;
+      this.sync();
+    });
   }
 
 }
