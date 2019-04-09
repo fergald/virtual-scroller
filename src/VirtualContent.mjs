@@ -1,5 +1,6 @@
 const DEBUG = true;
 const COLOUR = true;
+const BUFFER = 0;
 
 function DLOG(...messages) {
   if (!DEBUG) {
@@ -112,6 +113,12 @@ class Range {
     return this.high - this.low;
   }
 
+  overlaps(other) {
+    let low = this.low < other.low ? this : other;
+    let high = this.high > other.high ? this : other;
+    return low.high >= high.low;
+  }
+
   merge(other) {
     let low = this.low < other.low ? this : other;
     let high = this.high > other.high ? this : other;
@@ -220,28 +227,51 @@ export class VirtualContent extends HTMLElement {
   sync() {
     console.log("sync");
 
-    if (!this.childNodes.length) {
-      this.empty = true;
+    if (this.childNodes.length == 0) {
       return;
     }
 
-    if (this.empty) {
-      this.revealedBounds = this.revealFirstChild();
+    const desiredBounds = this.getDesiredBounds();
+
+    let newRevealedBounds;
+    if (this.revealedBounds !== undefined && desiredBounds.overlaps(this.revealedBounds)) {
+      newRevealedBounds = this.revealedBounds;
+    }
+
+    if (this.revealedBounds === undefined) {
+      newRevealedBounds = this.revealFirstChild(desiredBounds);
     }
 
     while (true) {
-      DLOG(this.getScrollerBounds().minus(this.revealedBounds));
-      let toReveal = this.getScrollerBounds().minus(this.revealedBounds);
+      let toReveal = desiredBounds.minus(newRevealedBounds);
       DLOG("toReveal", toReveal);
       if (toReveal.length == 0) {
         break;
       }
       for (const bounds of toReveal) {
-        let revealed = this.tryRevealBounds(bounds);
-        this.revealedBounds = this.revealedBounds.merge(revealed);
+        let revealed = this.tryRevealBounds(bounds, /* reveal */ true);
+        newRevealedBounds = newRevealedBounds.merge(revealed);
       }
     }
-    this.empty = false;
+
+    this.revealedBounds = this.trimTo(newRevealedBounds, desiredBounds);
+    while (true) {
+      let toHide = newRevealedBounds.minus(desiredBounds);
+      DLOG("toHide", toHide);
+      if (toHide.length == 0) {
+        break;
+      }
+      for (const bounds of toHide) {
+        let hidden = this.tryHideBounds(bounds, /* reveal */ false);
+        let newRevealedBoundsList = newRevealedBounds.minus(hidden);
+        if (newRevealedBoundsList.length != 1) {
+          throw "Too many bounds";
+        }
+        newRevealedBounds = newRevealedBoundsList[0];
+      }
+    }
+
+    this.revealedBounds = newRevealedBounds;
   }
 
   measure(element) {
@@ -267,25 +297,46 @@ export class VirtualContent extends HTMLElement {
     return new Range(this.innerContainer.scrollTop, this.innerContainer.scrollTop + this.getScrollerHeight());
   }
 
-  getRevealBounds() {
+  getDesiredBounds() {
     const top = this.innerContainer.scrollTop;
     const height = this.getScrollerHeight();
-    return new Range(Math.max(0, top - height), Math.min(top + 2 * height, this.innerContainer.scrollHeight));
+    return new Range(Math.max(0, top - BUFFER * height), Math.min(top + height + BUFFER * height, this.innerContainer.scrollHeight));
   }
 
-  revealFirstChild() {
-    this.requestReveal(this.firstChild);
-    return new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
+  revealFirstChild(bounds) {
+    let priorSize = 0;
+    let child = this.firstChild;
+    let size;
+    while (true)  {
+      size = this.getSize(child);
+      if (priorSize >= bounds.low) {
+        break;
+      }
+      priorSize += size;
+      child = child.nextElementSibling;
+    }
+    this.requestReveal(child);
+    return new Range(priorSize, priorSize + size, child, child);
   }
-
 
   tryRevealBounds(bounds) {
     if (bounds.lowElement) {
-      return this.revealHigher(bounds);
+      return this.revealDirection(bounds, /* lower */ false);
     } else if (bounds.highElement) {
-      return this.revealLower(bounds);
+      return this.revealDirection(bounds, /* lower */ true);
     } else {
-      return this.revealBoth(bounds);
+      //return this.revealBoth(bounds);
+      throw "Can't be neither"
+    }
+  }
+
+  tryHideBounds(bounds) {
+    if (bounds.lowElement) {
+      return this.hideDirection(bounds, /* lower */ false);
+    } else if (bounds.highElement) {
+      return this.hideDirection(bounds, /* lower */ true);
+    } else {
+      throw "Can't be neither"
     }
   }
 
@@ -330,14 +381,6 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  revealLower(bounds) {
-    return this.revealDirection(bounds, /* lower */ true);
-  }
-
-  revealHigher(bounds) {
-    return this.revealDirection(bounds, /* lower */ false);
-  }
-
   nextElement(element, lower) {
     return lower ? element.previousElementSibling : element.nextElementSibling;
   }
@@ -349,8 +392,27 @@ export class VirtualContent extends HTMLElement {
     let element = startElement;
     while (pixelsNeeded > 0 && element) {
       this.requestReveal(element);
-      lastElement = element;
       pixelsNeeded -= this.getSize(element);
+      lastElement = element;
+      element = this.nextElement(element, lower);
+    }
+    let low = lower ? lastElement : startElement;
+    let high = lower ? startElement : lastElement;
+    return new Range(this.getOffset(low), this.getOffset(high) + high.offsetHeight, low, high);
+  }
+
+  hideDirection(bounds, lower) {
+    let startElement = lower ? bounds.highElement : bounds.lowElement;
+    let pixelsNeeded = bounds.getSize();
+    let lastElement;
+    let element = startElement;
+    while (element) {
+      pixelsNeeded -= this.getSize(element);
+      if (pixelsNeeded <= 0) {
+        break;
+      }
+      this.requestHide(element);
+      lastElement = element;
       element = this.nextElement(element, lower);
     }
     let low = lower ? lastElement : startElement;
