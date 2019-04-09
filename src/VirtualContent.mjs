@@ -1,4 +1,4 @@
-const DEBUG = false;
+const DEBUG = true;
 const COLOUR = true;
 
 function DLOG(...messages) {
@@ -31,6 +31,7 @@ const TEMPLATE = `
    * DOM, unless we turn it off with this property. We want to do the adjustments
    * ourselves in [_update](), instead. */
   overflow-anchor: none;
+  display: block;
 }
 
 #emptySpaceSentinelContainer {
@@ -50,11 +51,17 @@ const TEMPLATE = `
 
 ::slotted(*) {
   display: block !important;
-  position: relative !important;
   contain: layout style
 }
 
-#outerContainer { contain: layout style }
+#outerContainer {
+  contain: layout style;
+}
+
+#innerContainer {
+  overflow-y: scroll;
+  height: 500px;
+}
 </style>
 <div id="outerContainer">
   <div id="innerContainer">
@@ -104,6 +111,16 @@ class Range {
   getSize() {
     return this.high - this.low;
   }
+
+  merge(other) {
+    let low = this.low < other.low ? this : other;
+    let high = this.high > other.high ? this : other;
+    if (low.high < high.low) {
+      throw "Cannot merge, no overlap";
+    }
+    // TODO: Handle 0-width elements in case of equal bounds.
+    return new Range(low.low, high.high, low.lowElement, high.highElement);
+  }
 }
 
 const LOCK_STATE_ACQUIRING = Symbol("LOCK_STATE_ACQUIRING");
@@ -143,7 +160,8 @@ export class VirtualContent extends HTMLElement {
   measuredCount = 0;
 
   empty = true;
-  
+  revealed = new WeakSet();
+
   constructor() {
     super();
 
@@ -187,6 +205,10 @@ export class VirtualContent extends HTMLElement {
     this.addEventListener(
         'activateinvisible', this.onActivateinvisible, {capture: true});
 
+    this.innerContainer.addEventListener('scroll', (e) => {
+      this.scheduleUpdate();
+    });
+      
     this.scheduleUpdate();
   }
 
@@ -204,19 +226,19 @@ export class VirtualContent extends HTMLElement {
     }
 
     if (this.empty) {
-      this.revealFirstChild();
+      this.revealedBounds = this.revealFirstChild();
     }
 
     while (true) {
+      DLOG(this.getScrollerBounds().minus(this.revealedBounds));
       let toReveal = this.getScrollerBounds().minus(this.revealedBounds);
       DLOG("toReveal", toReveal);
-      if (!toReveal) {
+      if (toReveal.length == 0) {
         break;
       }
       for (const bounds of toReveal) {
-        if (bounds) {
-          this.tryRevealBounds(bounds);
-        }
+        let revealed = this.tryRevealBounds(bounds);
+        this.revealedBounds = this.revealedBounds.merge(revealed);
       }
     }
     this.empty = false;
@@ -228,64 +250,65 @@ export class VirtualContent extends HTMLElement {
       oldSize = 0;
       this.measuredCount++;
     }
-    let newSize = element.clientHeight;
+    let newSize = element.offsetHeight;
     this.totalMeasuredSize += newSize - oldSize;
     this.sizes.set(element, newSize);
   }
 
-  getScrollerBounds() {
-    if (!this.scrollerBounds) {
+  getScrollerHeight() {
+    if (this.scrollerHeight === undefined) {
       let rect = this.getBoundingClientRect();
-      this.scrollerBounds = this.rectToRange(rect);
+      this.scrollerHeight = rect.height;
     }
-    return this.scrollerBounds;
+    return this.scrollerHeight;
+  }
+
+  getScrollerBounds() {
+    return new Range(this.innerContainer.scrollTop, this.innerContainer.scrollTop + this.getScrollerHeight());
+  }
+
+  getRevealBounds() {
+    const top = this.innerContainer.scrollTop;
+    const height = this.getScrollerHeight();
+    return new Range(Math.max(0, top - height), Math.min(top + 2 * height, this.innerContainer.scrollHeight));
   }
 
   revealFirstChild() {
     this.requestReveal(this.firstChild);
-    this.revealedBounds = new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
-    let toReveal = this.getScrollerBounds().minus(this.revealedBounds);
-    DLOG("toReveal", toReveal);
-    for (const bounds of toReveal) {
-      if (bounds) {
-        this.tryRevealBounds(bounds);
-      }
-    }
-    this.target = new Offset(0);
+    return new Range(0, this.getSize(this.firstChild), this.firstChild, this.firstChild);
   }
 
-  rectToRange(rect) {
-    // TODO: allow horizontal scrolling.
-    return new Range(rect.y, rect.height);
-  }
 
   tryRevealBounds(bounds) {
     if (bounds.lowElement) {
-      this.revealHigher(bounds);
+      return this.revealHigher(bounds);
     } else if (bounds.highElement) {
-      this.revealLower(bounds);
+      return this.revealLower(bounds);
     } else {
-      this.revealBoth(bounds);
+      return this.revealBoth(bounds);
     }
   }
 
   getRevealed(element) {
     return COLOUR ?
-      element.style.color == "red" :
+      element.style.color != "red" :
       element.displayLock.locked;
   }
 
   reveal(element) {
+    this.revealed.add(element);
     if (COLOUR) {
-      element.style.color =r "green";
+      element.style.color = "green";
     } else {
       element.displayLock.commit();
     }
+    this.measure(element);
   }
 
   hide(element) {
+    this.revealed.delete(element);
     if (COLOUR) {
-      element.style.color =r "red";
+      element.style.color = "red";
     } else {
       element.displayLock.acquire({ timeout: Infinity, activatable: true });
     }
@@ -308,11 +331,11 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealLower(bounds) {
-    this.revealDirection(bounds, /* lower */ true);
+    return this.revealDirection(bounds, /* lower */ true);
   }
 
   revealHigher(bounds) {
-    this.revealDirection(bounds, /* lower */ false);
+    return this.revealDirection(bounds, /* lower */ false);
   }
 
   nextElement(element, lower) {
@@ -320,15 +343,25 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealDirection(bounds, lower) {
-    let element = lower ? bounds.highElement : bounds.lowElement;
-    let pixelsNeeded = bounds.high - bounds.low - this.getSize(element);
-    while (pixelsNeeded > 0) {
-      element = this.nextElement(element, lower);
+    let startElement = lower ? bounds.highElement : bounds.lowElement;
+    let pixelsNeeded = bounds.getSize();
+    let lastElement;
+    let element = startElement;
+    while (pixelsNeeded > 0 && element) {
       this.requestReveal(element);
+      lastElement = element;
       pixelsNeeded -= this.getSize(element);
+      element = this.nextElement(element, lower);
     }
+    let low = lower ? lastElement : startElement;
+    let high = lower ? startElement : lastElement;
+    return new Range(this.getOffset(low), this.getOffset(high) + high.offsetHeight, low, high);
   }
 
+  getOffset(element) {
+    return element.offsetTop - this.offsetTop;
+  }
+  
   findElements(element, pixelsNeeded, lower) {
     console.log("element", element);
     let elements = [];
@@ -361,7 +394,7 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  getScrollerHeight() {
+  getContentHeight() {
     const numElements = this.children.length;
     return this.totalMeasuredSize + (numElements - this.measuredCount) * getAverageSize();
   }
@@ -468,18 +501,21 @@ export class VirtualContent extends HTMLElement {
     // (which could be a lot).
     this.elements.add(element);
     this.resizeObserver.observe(element);
-    return this.lockElement(element);
+    return this.requestHide(element);
   }
 
   mutationObserverCallback(records) {
+    let relevantMutation = false;
     for (const record of records) {
       for (const node of record.removedNodes) {
+        relevantMutation = true;
         if (node.nodeType === Node.ELEMENT_NODE) {
           this.removeElement(node);
         }
       }
 
       for (const node of record.addedNodes) {
+        relevantMutation = true;
         if (node.nodeType === Node.ELEMENT_NODE) {
           this.addElement(node);
         } else {
@@ -496,7 +532,9 @@ export class VirtualContent extends HTMLElement {
       }
     }
 
-//    this.scheduleUpdate();
+    if (relevantMutation) {
+      this.scheduleUpdate();
+    }
   }
 
   resizeObserverCallback() {
