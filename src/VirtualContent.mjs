@@ -234,46 +234,31 @@ export class VirtualContent extends HTMLElement {
     const desiredBounds = this.getDesiredBounds();
 
     let newRevealedBounds;
-    if (this.revealedBounds !== undefined && desiredBounds.overlaps(this.revealedBounds)) {
-      newRevealedBounds = this.revealedBounds;
+    if (this.revealedBounds !== undefined) {
+      if (desiredBounds.overlaps(this.revealedBounds)) {
+        newRevealedBounds = this.revealedBounds;
+      } else {
+        this.hideBounds(this.revealedBounds);
+      }
     }
 
-    if (this.revealedBounds === undefined) {
+    if (newRevealedBounds === undefined) {
       newRevealedBounds = this.revealFirstChild(desiredBounds);
     }
 
-    while (true) {
-      let toReveal = desiredBounds.minus(newRevealedBounds);
-      DLOG("toReveal", toReveal);
-      if (toReveal.length == 0) {
-        break;
-      }
-      for (const bounds of toReveal) {
-        let revealed = this.tryRevealBounds(bounds, /* reveal */ true);
-        newRevealedBounds = newRevealedBounds.merge(revealed);
-      }
-    }
-
-    this.revealedBounds = this.trimTo(newRevealedBounds, desiredBounds);
-    while (true) {
-      let toHide = newRevealedBounds.minus(desiredBounds);
-      DLOG("toHide", toHide);
-      if (toHide.length == 0) {
-        break;
-      }
-      for (const bounds of toHide) {
-        let hidden = this.tryHideBounds(bounds, /* reveal */ false);
-        let newRevealedBoundsList = newRevealedBounds.minus(hidden);
-        if (newRevealedBoundsList.length != 1) {
-          throw "Too many bounds";
-        }
-        newRevealedBounds = newRevealedBoundsList[0];
-      }
-    }
-
-    this.revealedBounds = newRevealedBounds;
+    this.revealedBounds = this.syncBounds(newRevealedBounds, desiredBounds);
   }
 
+  syncBounds(revealedBounds, desiredBounds) {
+    revealedBounds = revealedBounds.low < desiredBounds.low ?
+      this.hideDirection(revealedBounds, desiredBounds, /* lower */ false) :
+      this.revealDirection(revealedBounds, desiredBounds, /* lower */ true);
+
+    revealedBounds = revealedBounds.high > desiredBounds.high ?
+      this.hideDirection(revealedBounds, desiredBounds, /* lower */ true) :
+      this.revealDirection(revealedBounds, desiredBounds, /* lower */ false);
+  }
+  
   measure(element) {
     let oldSize = this.sizes.get(element);
     if (oldSize === undefined) {
@@ -316,7 +301,7 @@ export class VirtualContent extends HTMLElement {
       child = child.nextElementSibling;
     }
     this.requestReveal(child);
-    return new Range(priorSize, priorSize + size, child, child);
+    return new Range(priorSize, priorSize + this.getSize(child), child, child);
   }
 
   tryRevealBounds(bounds) {
@@ -385,25 +370,37 @@ export class VirtualContent extends HTMLElement {
     return lower ? element.previousElementSibling : element.nextElementSibling;
   }
 
-  revealDirection(bounds, lower) {
+  range(lowElement, highElement) {
+    return new Range(this.getOffset(lowElement), this.getOffset(highElement) + highElement.offsetHeight,
+                     lowElement, highElement);
+  }
+
+  revealDirection(bounds, limitBounds, lower) {
     let startElement = lower ? bounds.highElement : bounds.lowElement;
-    let pixelsNeeded = bounds.getSize();
+    let pixelsNeeded = lower ? bounds.low - limitBounds.low : limitBounds.high - bounds.high;
     let lastElement;
     let element = startElement;
-    while (pixelsNeeded > 0 && element) {
+    while (pixelsNeeded > 0) {
+      console.log("element", element);
+      lastElement = element;
+      let element = this.nextElement(element, lower);
+      if (!element) {
+        break;
+      }
       this.requestReveal(element);
       pixelsNeeded -= this.getSize(element);
-      lastElement = element;
-      element = this.nextElement(element, lower);
     }
-    let low = lower ? lastElement : startElement;
-    let high = lower ? startElement : lastElement;
-    return new Range(this.getOffset(low), this.getOffset(high) + high.offsetHeight, low, high);
+    if (lastElement === startElement) {
+      return bounds;
+    }
+    return lower ?
+      this.range(element, startElement) :
+      this.range(startElement, element);
   }
 
   hideDirection(bounds, lower) {
     let startElement = lower ? bounds.highElement : bounds.lowElement;
-    let pixelsNeeded = bounds.getSize();
+    let pixelsNeeded = lower ? limitBounds.low - bounds.low : bounds.high - limitBounds.high;
     let lastElement;
     let element = startElement;
     while (element) {
@@ -415,9 +412,12 @@ export class VirtualContent extends HTMLElement {
       lastElement = element;
       element = this.nextElement(element, lower);
     }
-    let low = lower ? lastElement : startElement;
-    let high = lower ? startElement : lastElement;
-    return new Range(this.getOffset(low), this.getOffset(high) + high.offsetHeight, low, high);
+    if (lastElement === undefined) {
+      return bounds;
+    }
+    return lower ?
+      this.range(lastElement, startElement) :
+      this.range(startElement, lastElement);
   }
 
   getOffset(element) {
