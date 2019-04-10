@@ -1,5 +1,6 @@
 const DEBUG = true;
-const COLOUR = true;
+const LOCKING = true;
+const COLOUR = !LOCKING || true;
 const BUFFER = .2;
 
 function DLOG(...messages) {
@@ -342,16 +343,17 @@ export class VirtualContent extends HTMLElement {
   }
 
   getRevealed(element) {
-    return COLOUR ?
-      element.style.color != "red" :
-      element.displayLock.locked;
+    return LOCKING ?
+      element.displayLock.locked :
+      element.style.color != "red";
   }
 
   reveal(element) {
     this.revealed.add(element);
     if (COLOUR) {
       element.style.color = "green";
-    } else {
+    }
+    if (LOCKING) {
       element.displayLock.commit();
     }
     this.measure(element);
@@ -361,7 +363,8 @@ export class VirtualContent extends HTMLElement {
     this.revealed.delete(element);
     if (COLOUR) {
       element.style.color = "red";
-    } else {
+    }
+    if (LOCKING) {
       element.displayLock.acquire({ timeout: Infinity, activatable: true });
     }
   }
