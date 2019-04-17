@@ -1,7 +1,8 @@
 const DEBUG = true;
-const LOCKING = true;
-const COLOUR = !LOCKING || true;
 const BUFFER = .2;
+
+let LOCKING = true;
+let COLOUR = !LOCKING || true;
 
 function DLOG(...messages) {
   if (!DEBUG) {
@@ -173,6 +174,11 @@ export class VirtualContent extends HTMLElement {
   constructor() {
     super();
 
+    if (!this.displayLock) {
+      console.log("Disabling locking");
+      LOCKING = false;
+      COLOUR = true;
+    }
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
     this.emptySpaceSentinelContainer =
