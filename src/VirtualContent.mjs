@@ -497,24 +497,6 @@ export class VirtualContent extends HTMLElement {
     return this.totalMeasuredSize + (numElements - this.measuredCount) * getAverageSize();
   }
 
-  updateToOffset(offset) {
-  }
-
-  updateToElement(target) {
-  }
-
-  short(e) {
-    return e.innerText.substr(0, 3);
-  }
-
-  showElement = (e) => {
-    /*
-    this.toShow.add(e);
-    this.toShow.add(e);
-    this.scheduleUpdate();
-    */
-  }
-
   intersectionObserverCallback = (entries) => {
     /*
     for (const {target, isIntersecting} of entries) {
