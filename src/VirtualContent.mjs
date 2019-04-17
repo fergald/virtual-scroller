@@ -11,21 +11,6 @@ function DLOG(...messages) {
   console.log(...messages);
 }
 
-function composedTreeParent(node) {
-  return node.assignedSlot || node.host || node.parentNode;
-}
-
-function nearestScrollingAncestor(node) {
-  for (node = composedTreeParent(node); node !== null;
-       node = composedTreeParent(node)) {
-    if (node.nodeType === Node.ELEMENT_NODE &&
-        node.scrollHeight > node.clientHeight) {
-      return node;
-    }
-  }
-  return null;
-}
-
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 const TEMPLATE = `
 <style>
@@ -139,7 +124,6 @@ const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
 
 export class VirtualContent extends HTMLElement {
   sizes = new WeakMap();
-  target;
   toShow = new Set();
   updateRAFToken;
   postUpdateNeeded = false;
@@ -239,11 +223,6 @@ export class VirtualContent extends HTMLElement {
     this.hasAttribute(name) ?
       this.getAttribute(name) :
       defaultValue;
-  }
-
-  setTarget(offset) {
-    this.target = offset;
-    this.scheduleUpdate();
   }
 
   hideBounds(bounds) {
