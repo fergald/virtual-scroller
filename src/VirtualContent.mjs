@@ -524,54 +524,14 @@ export class VirtualContent extends HTMLElement {
     */
   }
 
-  unlockElement(element) {
-    const state = this.lockState.get(element);
-    if (state === LOCK_STATE_ACQUIRED) {
-      this.lockState.set(element, LOCK_STATE_COMMITTING);
-      this.unlocking.add(element);
-      return element.displayLock.updateAndCommit().then(
-          () => {
-            this.lockState.delete(element);
-            this.unlocking.delete(element);
-            if (this.elements.has(element)) {
-              this.justUnlocked.add(element);
-              this.scheduleUpdate();
-            }
-          });
-    } else {
-      DLOG(element, "while unlocking lock state", state);
-    }
-  }
-
   removeElement(element) {
     // Removed children should have be made visible again. We stop observing
     // them for resize so we should discard any size info we have to them as it
     // may become incorrect.
     this.resizeObserver.unobserve(element);
-    this.unlockElement(element);
+    this.hide(element);
     this.sizes.delete(element);
     this.elements.delete(element);
-  }
-
-  lockElement(element) {
-    const state = this.lockState.get(element);
-    if (state === undefined) {
-      this.lockState.set(element, LOCK_STATE_ACQUIRING);
-      this.locking.add(element);
-      console.log("acquiring", element);
-      return element.displayLock.acquire({ timeout: Infinity, activatable: true }).then(
-          () => {
-            // console.log("acquired", element);
-            // console.log("locked", element.displayLock.locked);
-            this.lockState.set(element, LOCK_STATE_ACQUIRED);
-            this.locking.delete(element);
-            if (this.elements.has(element)) {
-              this.scheduleUpdate();
-            }
-          });
-    } else {
-      DLOG(element, "while locking lock state", state);
-    }
   }
 
   addElement(element) {
