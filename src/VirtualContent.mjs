@@ -382,7 +382,11 @@ export class VirtualContent extends HTMLElement {
       element.style.color = "red";
     }
     if (LOCKING) {
-      element.displayLock.acquire({ timeout: Infinity, activatable: true });
+      element.displayLock.acquire({
+        timeout: Infinity,
+        activatable: true,
+        size: [10, this.getSize(element)],
+      });
     }
   }
 
