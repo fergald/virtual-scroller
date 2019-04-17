@@ -264,9 +264,20 @@ export class VirtualContent extends HTMLElement {
       newRevealedBounds = this.revealFirstChild(desiredBounds);
     }
 
-    console.log("newRevealedBounds", newRevealedBounds);
     console.log("desiredBounds", desiredBounds);
     this.revealedBounds = this.syncBounds(newRevealedBounds, desiredBounds);
+    console.log("newRevealedBounds", newRevealedBounds);
+    console.log("revealCount", this.revealCount());
+  }
+
+  revealCount() {
+    let count = 0;
+    for (const element of this.children) {
+      if (this.getRevealed(element)) {
+        count++;
+      }
+    }
+    return count;
   }
 
   syncBounds(revealedBounds, desiredBounds) {
