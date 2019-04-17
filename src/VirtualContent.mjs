@@ -333,26 +333,6 @@ export class VirtualContent extends HTMLElement {
     return new Range(priorSize, priorSize + this.getSize(child), child, child);
   }
 
-  tryRevealBounds(bounds) {
-    if (bounds.lowElement) {
-      return this.revealDirection(bounds, /* lower */ false);
-    } else if (bounds.highElement) {
-      return this.revealDirection(bounds, /* lower */ true);
-    } else {
-      throw "Can't be neither"
-    }
-  }
-
-  tryHideBounds(bounds) {
-    if (bounds.lowElement) {
-      return this.hideDirection(bounds, /* lower */ false);
-    } else if (bounds.highElement) {
-      return this.hideDirection(bounds, /* lower */ true);
-    } else {
-      throw "Can't be neither"
-    }
-  }
-
   getRevealed(element) {
     return this.useLocking ?
       !element.displayLock.locked :
@@ -459,19 +439,6 @@ export class VirtualContent extends HTMLElement {
     return element.offsetTop - this.offsetTop;
   }
   
-  findElements(element, pixelsNeeded, lower) {
-    console.log("element", element);
-    let elements = [];
-    while (pixelsNeeded > 0) {
-      elements.push(element);
-      pixelsNeeded -= this.getSize(element)
-      element = lower ? element.previousElementSibling : element.nextElementSibling;
-      console.log("element", element);
-      console.log("pixelsNeeded", pixelsNeeded);
-    }
-    return elements;
-  }
-
   getSize(element) {
     let size = this.sizes.get(element);
     return size === undefined ? this.getAverageSize() : size;
