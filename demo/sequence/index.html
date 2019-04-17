@@ -38,9 +38,10 @@
 </script>
 <h1>Demo of display-locking scroller</h1>
 
-<p>If you see red you are seeing "locked" elements. You can control
-  whether display locking is actually used or not and various other
-  things with the form below.
+<p>If you see red you are seeing "locked" elements and something has
+  gone wrong (see below for known issues). You can control whether
+  display locking is actually used or not and various other things
+  with the form below.
 </p>
 <p>Things that should work
   <ul>
@@ -49,9 +50,10 @@
 </p>
 <p>Things that don't work
   <ul>
-    <li>resizing (not implemented)
+    <li>coping with resizing (not implemented)
     <li>coping with adding/deleting elements (not implemented)
-    <li>scrollIntoView a long way down the doc (crashes <a href=https://crbug.com/953614>https://crbug.com/953614</a>)
+    <li>scrollIntoView/find-in-page (crashes <a href=https://crbug.com/953614>https://crbug.com/953614</a>)
+    <li>Debug inspector crashes if it tries to highlight a locked element
   </ul>
 </p>
 
