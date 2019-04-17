@@ -1,8 +1,8 @@
 const DEBUG = true;
 const BUFFER = .2;
 
-let LOCKING = true;
-let COLOUR = !LOCKING || true;
+let LOCKING_DEFAULT = true;
+let COLOUR_DEFAULT = false;
 
 function DLOG(...messages) {
   if (!DEBUG) {
@@ -171,14 +171,20 @@ export class VirtualContent extends HTMLElement {
   empty = true;
   revealed = new WeakSet();
 
+  useLocking;
+  useColor;
+
   constructor() {
     super();
 
     if (!this.displayLock) {
       console.log("Disabling locking");
-      LOCKING = false;
-      COLOUR = true;
+      this.useLocking = false;
+    } else {
+      this.useLocking = this.getAttributeDefault("use-locking", LOCKING_DEFAULT);
     }
+    this.useColor = !this.useLocking || this.getAttributeDefault("use-color", COLOUR_DEFAULT);
+
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
     this.emptySpaceSentinelContainer =
@@ -224,6 +230,12 @@ export class VirtualContent extends HTMLElement {
     });
       
     this.scheduleUpdate();
+  }
+
+  getAttributeDefault(name, defaultValue) {
+    this.hasAttribute(name) ?
+      this.getAttribute(name) :
+      defaultValue;
   }
 
   setTarget(offset) {
@@ -361,17 +373,17 @@ export class VirtualContent extends HTMLElement {
   }
 
   getRevealed(element) {
-    return LOCKING ?
+    return this.useLocking ?
       !element.displayLock.locked :
       element.style.color != "red";
   }
 
   reveal(element) {
     this.revealed.add(element);
-    if (COLOUR) {
+    if (this.useColor) {
       element.style.color = "green";
     }
-    if (LOCKING) {
+    if (this.useLocking) {
       element.displayLock.commit();
     }
     this.measure(element);
@@ -379,10 +391,10 @@ export class VirtualContent extends HTMLElement {
 
   hide(element) {
     this.revealed.delete(element);
-    if (COLOUR) {
+    if (this.useColor) {
       element.style.color = "red";
     }
-    if (LOCKING) {
+    if (this.useLocking) {
       element.displayLock.acquire({
         timeout: Infinity,
         activatable: true,
