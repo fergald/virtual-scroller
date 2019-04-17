@@ -128,28 +128,14 @@ export class VirtualContent extends HTMLElement {
   intersectionObserver;
   mutationObserver;
   resizeObserver;
-  // The inner container allows us to get the size of the scroller without
-  // forcing layout of the containing doc.
-  outerContainer;
   innerContainer;
   emptySpaceSentinelContainer;
 
-  scrollerBounds;
   revealedBounds;
-  attemptedRevealedBounds;
-
-  lockState = new WeakMap();
-  toUnlock = new Set();
-  justUnlocked = new Set();
-
-  elements = new WeakSet();
-  locking = new Set();
-  unlocking = new Set();
 
   totalMeasuredSize = 0;
   measuredCount = 0;
 
-  empty = true;
   revealed = new WeakSet();
 
   useLocking;
@@ -164,8 +150,6 @@ export class VirtualContent extends HTMLElement {
     shadowRoot.innerHTML = TEMPLATE;
     this.emptySpaceSentinelContainer =
         shadowRoot.getElementById('emptySpaceSentinelContainer');
-    this.outerContainer =
-        shadowRoot.getElementById('outerContainer');
     this.innerContainer =
       shadowRoot.getElementById('innerContainer');
 
@@ -468,7 +452,6 @@ export class VirtualContent extends HTMLElement {
     this.resizeObserver.unobserve(element);
     this.hide(element);
     this.sizes.delete(element);
-    this.elements.delete(element);
   }
 
   addElement(element) {
@@ -476,7 +459,6 @@ export class VirtualContent extends HTMLElement {
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    this.elements.add(element);
     this.resizeObserver.observe(element);
     return this.requestHide(element);
   }
