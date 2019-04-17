@@ -12,18 +12,25 @@
       words += " word";
     }
 
+    let vc = document.createElement("virtual-content");
+    vc.setUseLocking(useLocking.value);
+    contentDiv.innerHTML = "";
+    contentDiv.append(vc);
     for (let i = 0; i < elementCount.value; i++) {
       let e = document.createElement("div");
       e.innerText = i + words;
       e.id = "p" + i;
       vc.appendChild(e);
     }
+    goButton.disabled = true;
   }
   window.populate = populate;
 //  populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
-Element Count: <input id=elementCount name="elementCount" value=1000>
-Word Count: <input id=wordCount name="wordCount" value=100>
-<div onClick="populate()">Go</div>
-<virtual-content id=vc></virtual-content>
+Element Count: <input id=elementCount value=1000>
+Word Count: <input id=wordCount value=100>
+Use Display Locking: <input id=useLocking checked type=checkbox>
+<br>
+<input type=button onClick="populate()" value="Go" id=goButton>
+<div id=contentDiv></div>

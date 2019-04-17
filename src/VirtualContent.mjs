@@ -172,18 +172,12 @@ export class VirtualContent extends HTMLElement {
   revealed = new WeakSet();
 
   useLocking;
-  useColor;
+  useColor = true;
 
   constructor() {
     super();
 
-    if (!this.displayLock) {
-      console.log("Disabling locking");
-      this.useLocking = false;
-    } else {
-      this.useLocking = this.getAttributeDefault("use-locking", LOCKING_DEFAULT);
-    }
-    this.useColor = !this.useLocking || this.getAttributeDefault("use-color", COLOUR_DEFAULT);
+    this.setUseLocking(LOCKING_DEFAULT);
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
@@ -230,6 +224,15 @@ export class VirtualContent extends HTMLElement {
     });
       
     this.scheduleUpdate();
+  }
+
+  setUseLocking(useLocking) {
+    if (useLocking && !this.displayLock) {
+      console.log("Disabling locking");
+      this.useLocking = false;
+    } else {
+      this.useLocking = useLocking;
+    }
   }
 
   getAttributeDefault(name, defaultValue) {
