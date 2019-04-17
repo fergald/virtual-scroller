@@ -339,7 +339,6 @@ export class VirtualContent extends HTMLElement {
     } else if (bounds.highElement) {
       return this.revealDirection(bounds, /* lower */ true);
     } else {
-      //return this.revealBoth(bounds);
       throw "Can't be neither"
     }
   }
@@ -480,21 +479,6 @@ export class VirtualContent extends HTMLElement {
 
   getAverageSize() {
     return DEFAULT_HEIGHT_ESTIMATE;
-  }
-
-  revealBoth(bounds) {
-    let firstElement = this.firstChild;
-    let elements = this.findElements(firstElement, bounds.low, /* lower */ false);
-    let startElement = elements ? elements[-1] : firstElement;
-    let elementsToReveal = this.findElements(startElement, bounds.getSize(), /* lower */ false);
-    for (const element of elementsToReveal) {
-      this.requestReveal(element);
-    }
-  }
-
-  getContentHeight() {
-    const numElements = this.children.length;
-    return this.totalMeasuredSize + (numElements - this.measuredCount) * getAverageSize();
   }
 
   intersectionObserverCallback = (entries) => {
