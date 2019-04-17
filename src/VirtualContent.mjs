@@ -124,9 +124,7 @@ const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
 
 export class VirtualContent extends HTMLElement {
   sizes = new WeakMap();
-  toShow = new Set();
   updateRAFToken;
-  postUpdateNeeded = false;
   intersectionObserver;
   mutationObserver;
   resizeObserver;
@@ -136,7 +134,6 @@ export class VirtualContent extends HTMLElement {
   innerContainer;
   emptySpaceSentinelContainer;
 
-  innerRect;
   scrollerBounds;
   revealedBounds;
   attemptedRevealedBounds;
@@ -171,7 +168,6 @@ export class VirtualContent extends HTMLElement {
         shadowRoot.getElementById('outerContainer');
     this.innerContainer =
       shadowRoot.getElementById('innerContainer');
-    this.innerRect = this.innerContainer.getBoundingClientRect()
 
     this.intersectionObserver =
         new IntersectionObserver(this.intersectionObserverCallback);
