@@ -28,9 +28,30 @@
 //  populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
-Element Count: <input id=elementCount value=1000>
-Word Count: <input id=wordCount value=100>
-Use Display Locking: <input id=useLocking checked type=checkbox>
-<br>
-<input type=button onClick="populate()" value="Go" id=goButton>
+<h1>Demo of display-locking scroller</h1>
+
+<p>If you see red you are seeing "locked" elements. You can control
+  whether display locking is actually used or not and various other
+  things with the form below.
+</p>
+<p>Things that should work
+  <ul>
+    <li>scrolling around
+  </ul>
+</p>
+<p>Things that don't work
+  <ul>
+    <li>resizing (not implemented)
+    <li>adding/deleting elements
+    <li>finding locked elements (crashes <a href=https://crbug.com/953614>https://crbug.com/953614</a>)
+  </ul>
+</p>
+
+<div>
+  Element Count: <input id=elementCount value=1000>
+  Word Count: <input id=wordCount value=100>
+  Use Display Locking: <input id=useLocking checked type=checkbox>
+  <br>
+  <input type=button onClick="populate()" value="Go" id=goButton>
+</div>
 <div id=contentDiv></div>
