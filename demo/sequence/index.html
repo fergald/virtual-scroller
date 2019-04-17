@@ -7,9 +7,14 @@
   import '../../src/virtual-content.mjs';
 
   export function populate() {
+    let words = "";
+    for (let i = 0; i < wordCount.value; i++) {
+      words += " word";
+    }
+
     for (let i = 0; i < elementCount.value; i++) {
       let e = document.createElement("div");
-      e.innerText = i;
+      e.innerText = i + words;
       e.id = "p" + i;
       vc.appendChild(e);
     }
@@ -19,5 +24,6 @@
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
 Element Count: <input id=elementCount name="elementCount" value=1000>
+Word Count: <input id=wordCount name="wordCount" value=100>
 <div onClick="populate()">Go</div>
 <virtual-content id=vc></virtual-content>
