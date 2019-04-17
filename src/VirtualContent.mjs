@@ -219,12 +219,6 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  getAttributeDefault(name, defaultValue) {
-    this.hasAttribute(name) ?
-      this.getAttribute(name) :
-      defaultValue;
-  }
-
   hideBounds(bounds) {
     let element = bounds.lowElement;
     while (true) {
@@ -305,10 +299,6 @@ export class VirtualContent extends HTMLElement {
       this.scrollerHeight = rect.height;
     }
     return this.scrollerHeight;
-  }
-
-  getScrollerBounds() {
-    return new Range(this.innerContainer.scrollTop, this.innerContainer.scrollTop + this.getScrollerHeight());
   }
 
   getDesiredBounds() {
