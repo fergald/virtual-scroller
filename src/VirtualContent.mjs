@@ -265,8 +265,9 @@ export class VirtualContent extends HTMLElement {
     }
 
     console.log("desiredBounds", desiredBounds);
-    this.revealedBounds = this.syncBounds(newRevealedBounds, desiredBounds);
     console.log("newRevealedBounds", newRevealedBounds);
+    this.revealedBounds = this.syncBounds(newRevealedBounds, desiredBounds);
+    console.log("this.revealedBounds", this.revealedBounds);
     console.log("revealCount", this.revealCount());
   }
 
