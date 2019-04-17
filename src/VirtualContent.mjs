@@ -111,7 +111,7 @@ class Range {
     return result;
   }
 
-  getSize() {
+  getThisSize() {
     return this.high - this.low;
   }
 
