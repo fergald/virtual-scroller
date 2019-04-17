@@ -231,14 +231,14 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
-  _hideBounds(bounds) {
+  hideBounds(bounds) {
     let element = bounds.lowElement;
     while (true) {
       this.requestHide(element);
-      element = element.nextElementSibling;
-      if (!element) {
+      if (element === bounds.highElement) {
         break;
       }
+      element = element.nextElementSibling;
     }
   }
   
