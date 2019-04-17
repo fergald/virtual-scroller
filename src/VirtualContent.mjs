@@ -344,7 +344,7 @@ export class VirtualContent extends HTMLElement {
 
   getRevealed(element) {
     return LOCKING ?
-      element.displayLock.locked :
+      !element.displayLock.locked :
       element.style.color != "red";
   }
 
