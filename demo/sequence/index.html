@@ -7,129 +7,17 @@
   import '../../src/virtual-content.mjs';
 
   export function populate() {
-      const virtualContent = document.querySelector('virtual-content');
-      const template = document.getElementById('MAIN_TEMPLATE');
-
-      virtualContent.appendChild(template.content);
+    for (let i = 0; i < elementCount.value; i++) {
+      let e = document.createElement("div");
+      e.innerText = i;
+      e.id = "p" + i;
+      vc.appendChild(e);
+    }
   }
   window.populate = populate;
 //  populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
+Element Count: <input id=elementCount name="elementCount" value=1000>
 <div onClick="populate()">Go</div>
 <virtual-content id=vc></virtual-content>
-
-<template id="MAIN_TEMPLATE">
-  <div id=p1>1</div>
-  <div id=p2>2</div>
-  <div id=p3>3</div>
-  <div id=p4>4</div>
-  <div id=p5>5</div>
-  <div id=p6>6</div>
-  <div id=p7>7</div>
-  <div id=p8>8</div>
-  <div id=p9>9</div>
-  <div id=p10>10</div>
-  <div id=p11>11</div>
-  <div id=p12>12</div>
-  <div id=p13>13</div>
-  <div id=p14>14</div>
-  <div id=p15>15</div>
-  <div id=p16>16</div>
-  <div id=p17>17</div>
-  <div id=p18>18</div>
-  <div id=p19>19</div>
-  <div id=p20>20</div>
-  <div id=p21>21</div>
-  <div id=p22>22</div>
-  <div id=p23>23</div>
-  <div id=p24>24</div>
-  <div id=p25>25</div>
-  <div id=p26>26</div>
-  <div id=p27>27</div>
-  <div id=p28>28</div>
-  <div id=p29>29</div>
-  <div id=p30>30</div>
-  <div id=p31>31</div>
-  <div id=p32>32</div>
-  <div id=p33>33</div>
-  <div id=p34>34</div>
-  <div id=p35>35</div>
-  <div id=p36>36</div>
-  <div id=p37>37</div>
-  <div id=p38>38</div>
-  <div id=p39>39</div>
-  <div id=p40>40</div>
-  <div id=p41>41</div>
-  <div id=p42>42</div>
-  <div id=p43>43</div>
-  <div id=p44>44</div>
-  <div id=p45>45</div>
-  <div id=p46>46</div>
-  <div id=p47>47</div>
-  <div id=p48>48</div>
-  <div id=p49>49</div>
-  <div id=p50>50</div>
-  <div id=p51>51</div>
-  <div id=p52>52</div>
-  <div id=p53>53</div>
-  <div id=p54>54</div>
-  <div id=p55>55</div>
-  <div id=p56>56</div>
-  <div id=p57>57</div>
-  <div id=p58>58</div>
-  <div id=p59>59</div>
-  <div id=p60>60</div>
-  <div id=p61>61</div>
-  <div id=p62>62</div>
-  <div id=p63>63</div>
-  <div id=p64>64</div>
-  <div id=p65>65</div>
-  <div id=p66>66</div>
-  <div id=p67>67</div>
-  <div id=p68>68</div>
-  <div id=p69>69</div>
-  <div id=p70>70</div>
-  <div id=p71>71</div>
-  <div id=p72>72</div>
-  <div id=p73>73</div>
-  <div id=p74>74</div>
-  <div id=p75>75</div>
-  <div id=p76>76</div>
-  <div id=p77>77</div>
-  <div id=p78>78</div>
-  <div id=p79>79</div>
-  <div id=p80>80</div>
-  <div id=p81>81</div>
-  <div id=p82>82</div>
-  <div id=p83>83</div>
-  <div id=p84>84</div>
-  <div id=p85>85</div>
-  <div id=p86>86</div>
-  <div id=p87>87</div>
-  <div id=p88>88</div>
-  <div id=p89>89</div>
-  <div id=p90>90</div>
-  <div id=p91>91</div>
-  <div id=p92>92</div>
-  <div id=p93>93</div>
-  <div id=p94>94</div>
-  <div id=p95>95</div>
-  <div id=p96>96</div>
-  <div id=p97>97</div>
-  <div id=p98>98</div>
-  <div id=p99>99</div>
-  <div id=p100>100</div>
-  <div id=p101>101</div>
-  <div id=p102>102</div>
-  <div id=p103>103</div>
-  <div id=p104>104</div>
-  <div id=p105>105</div>
-  <div id=p106>106</div>
-  <div id=p107>107</div>
-  <div id=p108>108</div>
-  <div id=p109>109</div>
-  <div id=p110>110</div>
-  <div id=p111>111</div>
-  <div id=p112>112</div>
-</template>
