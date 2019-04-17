@@ -6,7 +6,7 @@
 <script type="module">
   import '../../src/virtual-content.mjs';
 
-  export function populate() {
+  function populate() {
     let words = "";
     for (let i = 0; i < wordCount.value; i++) {
       words += " word";
@@ -25,6 +25,14 @@
     goButton.disabled = true;
   }
   window.populate = populate;
+
+  function jump() {
+    let elements = contentDiv.children[0].children;
+    elements[elements.length - 1].scrollIntoView();
+  }
+  window.jump = jump;
+
+
 //  populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
@@ -43,7 +51,7 @@
   <ul>
     <li>resizing (not implemented)
     <li>coping with adding/deleting elements (not implemented)
-    <li>finding locked elements (crashes <a href=https://crbug.com/953614>https://crbug.com/953614</a>)
+    <li>scrollIntoView a long way down the doc (crashes <a href=https://crbug.com/953614>https://crbug.com/953614</a>)
   </ul>
 </p>
 
@@ -53,5 +61,6 @@
   Use Display Locking: <input id=useLocking checked type=checkbox>
   <br>
   <input type=button onClick="populate()" value="Go" id=goButton>
+  <input type=button onClick="jump()" value="Jump" id=jumpButton>
 </div>
 <div id=contentDiv></div>
