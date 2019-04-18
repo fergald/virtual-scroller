@@ -73,6 +73,11 @@ class Offset {
 // is an element having highest edge equal to |high|.
 class Range {
   constructor(low, high, lowElement, highElement) {
+    if (DEBUG) {
+      if (low > high) {
+        throw Error(low + " > " + high);
+     }
+    }
     this.low = low;
     this.high = high;
     this.lowElement = lowElement;
