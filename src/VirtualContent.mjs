@@ -315,7 +315,7 @@ export class VirtualContent extends HTMLElement {
       element.style.color = "green";
     }
     if (this.useLocking) {
-      element.displayLock.commit();
+      element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
     }
     this.measure(element);
   }
@@ -330,7 +330,7 @@ export class VirtualContent extends HTMLElement {
         timeout: Infinity,
         activatable: true,
         size: [10, this.getSize(element)],
-      });
+      }).then(null, reason => {console.log("Rejected: ", reason.message)});
     }
   }
 
