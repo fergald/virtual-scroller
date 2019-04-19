@@ -328,7 +328,11 @@ export class VirtualContent extends HTMLElement {
         break;
       }
       priorSize += size;
-      child = child.nextElementSibling;
+      if (child.nextElementSibling) {
+        child = child.nextElementSibling;
+      } else {
+        break;
+      }
     }
     this.requestReveal(child);
     return new Range(priorSize, priorSize + this.getValidSize(child), child, child);
