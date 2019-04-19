@@ -120,6 +120,21 @@ class Range {
     // TODO: Handle 0-width elements in case of equal bounds.
     return new Range(low.low, high.high, low.lowElement, high.highElement);
   }
+
+  sameEnds(other) {
+    return other.low === this.low && other.high === this.high;
+  }
+
+  doToAll(fn) {
+    let element = this.lowElement;
+    while (true) {
+      fn(element);
+      if (element === this.highElement) {
+        break;
+      }
+      element = element.nextElementSibling;
+    }
+  }
 }
 
 const LOCK_STATE_ACQUIRING = Symbol("LOCK_STATE_ACQUIRING");
@@ -129,6 +144,7 @@ const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
 
 export class VirtualContent extends HTMLElement {
   sizes = new WeakMap();
+  sizeValid = new WeakMap();
   updateRAFToken;
   intersectionObserver;
   mutationObserver;
@@ -205,14 +221,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   hideBounds(bounds) {
-    let element = bounds.lowElement;
-    while (true) {
-      this.requestHide(element);
-      if (element === bounds.highElement) {
-        break;
-      }
-      element = element.nextElementSibling;
-    }
+    bounds.doToAll(element => {this.requestHide(element)});
   }
   
   sync() {
@@ -267,7 +276,15 @@ export class VirtualContent extends HTMLElement {
     return revealedBounds;
   }
   
-  measure(element) {
+  ensureValidSize(element) {
+    if (this.sizeValid.get(element)) {
+      if (DEBUG) {
+        if (this.sizes.has(element) === undefined) {
+          throw "No size for valid size: " + element;
+        }
+      }
+      return;
+    }
     let oldSize = this.sizes.get(element);
     if (oldSize === undefined) {
       oldSize = 0;
@@ -276,6 +293,15 @@ export class VirtualContent extends HTMLElement {
     let newSize = element.offsetHeight;
     this.totalMeasuredSize += newSize - oldSize;
     this.sizes.set(element, newSize);
+    this.sizeValid.set(element, true);
+  }
+
+  invalidateSize(element) {
+    this.sizeValid.set(element, false);
+  }
+
+  measureBounds(bounds) {
+    bounds.doToAll(element => {this.ensureValidSize(element)});
   }
 
   getScrollerHeight() {
@@ -297,7 +323,7 @@ export class VirtualContent extends HTMLElement {
     let child = this.firstChild;
     let size;
     while (true)  {
-      size = this.getSize(child);
+      size = this.getHopefulSize(child);
       if (priorSize >= bounds.low) {
         break;
       }
@@ -305,7 +331,7 @@ export class VirtualContent extends HTMLElement {
       child = child.nextElementSibling;
     }
     this.requestReveal(child);
-    return new Range(priorSize, priorSize + this.getSize(child), child, child);
+    return new Range(priorSize, priorSize + this.getValidSize(child), child, child);
   }
 
   getRevealed(element) {
@@ -322,7 +348,6 @@ export class VirtualContent extends HTMLElement {
     if (this.useLocking) {
       element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
     }
-    this.measure(element);
   }
 
   hide(element) {
@@ -334,9 +359,10 @@ export class VirtualContent extends HTMLElement {
       element.displayLock.acquire({
         timeout: Infinity,
         activatable: true,
-        size: [10, this.getSize(element)],
+        size: [10, this.getHopefulSize(element)],
       }).then(null, reason => {console.log("Rejected: ", reason.message)});
     }
+    this.invalidateSize(element);
   }
 
   requestReveal(element) {
@@ -365,6 +391,18 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealDirection(bounds, limitBounds, lower) {
+    let previous;
+    while (true) {
+      let result = this.hopefulRevealDirection(bounds, limitBounds, lower);
+      if (previous && previous.sameEnds(result)) {
+        this.measureBounds(result);
+        return result;
+      }
+      previous = result;
+    }
+  }
+
+  hopefulRevealDirection(bounds, limitBounds, lower) {
     let startElement = lower ? bounds.lowElement : bounds.highElement;
     let pixelsNeeded = lower ? bounds.low - limitBounds.low : limitBounds.high - bounds.high;
     let element = startElement;
@@ -376,7 +414,7 @@ export class VirtualContent extends HTMLElement {
       }
       element = nextElement;
       this.requestReveal(element);
-      pixelsNeeded -= this.getSize(element);
+      pixelsNeeded -= this.getHopefulSize(element);
     }
     if (element === startElement) {
       return bounds;
@@ -395,7 +433,7 @@ export class VirtualContent extends HTMLElement {
       if (!nextElement) {
         break;
       }
-      pixelsNeeded -= this.getSize(element);
+      pixelsNeeded -= this.getValidSize(element);
       if (pixelsNeeded <= 0) {
         break;
       }
@@ -414,13 +452,20 @@ export class VirtualContent extends HTMLElement {
     return element.offsetTop - this.offsetTop;
   }
   
-  getSize(element) {
+  getValidSize(element) {
+    this.ensureValidSize(element);
+    return this.sizes.get(element);
+  }
+
+  getHopefulSize(element) {
     let size = this.sizes.get(element);
     return size === undefined ? this.getAverageSize() : size;
   }
 
   getAverageSize() {
-    return DEFAULT_HEIGHT_ESTIMATE;
+    return this.measuredCount > 0 ?
+      this.totalMeasuredSize / this.measuredCount :
+      DEFAULT_HEIGHT_ESTIMATE;
   }
 
   intersectionObserverCallback = (entries) => {
