@@ -13,7 +13,7 @@
     }
 
     let vc = document.createElement("virtual-content");
-    vc.setUseLocking(useLocking.value);
+    vc.setUseLocking(useLocking.checked);
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
     for (let i = 0; i < elementCount.value; i++) {
