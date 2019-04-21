@@ -233,10 +233,6 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  hideBounds(bounds) {
-    bounds.doToAll(element => {this.requestHide(element)});
-  }
-  
   sync() {
     console.log("sync");
 
@@ -367,40 +363,6 @@ export class VirtualContent extends HTMLElement {
     bounds.doToAll(element => {this.ensureValidSize(element)});
   }
 
-  getScrollerHeight() {
-    if (this.scrollerHeight === undefined) {
-      let rect = this.getBoundingClientRect();
-      this.scrollerHeight = rect.height;
-    }
-    return this.scrollerHeight;
-  }
-
-  getDesiredBounds() {
-    const top = this.innerContainer.scrollTop;
-    const height = this.getScrollerHeight();
-    return new Range(Math.max(0, top - BUFFER * height), Math.min(top + height + BUFFER * height, this.innerContainer.scrollHeight));
-  }
-
-  revealFirstChild(bounds) {
-    let priorSize = 0;
-    let child = this.firstChild;
-    let size;
-    while (true)  {
-      size = this.getHopefulSize(child);
-      if (priorSize >= bounds.low) {
-        break;
-      }
-      priorSize += size;
-      if (child.nextElementSibling) {
-        child = child.nextElementSibling;
-      } else {
-        break;
-      }
-    }
-    this.requestReveal(child);
-    return new Range(priorSize, priorSize + this.getValidSize(child), child, child);
-  }
-
   getRevealed(element) {
     return this.useLocking ?
       !element.displayLock.locked :
@@ -448,43 +410,11 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  nextElement(element, lower) {
-    return lower ? element.previousElementSibling : element.nextElementSibling;
-  }
-
   range(lowElement, highElement) {
     return new Range(lowElement.getBoundingClientRect().top, highElement.getBoundingClientRect().bottom,
                      lowElement, highElement);
   }
 
-  hideDirection(bounds, limitBounds, lower) {
-    let startElement = lower ? bounds.highElement : bounds.lowElement;
-    let pixelsNeeded = lower ? bounds.high - limitBounds.high : limitBounds.low - bounds.low;
-    let element = startElement;
-    while (true) {
-      let nextElement = this.nextElement(element, lower);
-      if (!nextElement) {
-        break;
-      }
-      pixelsNeeded -= this.getValidSize(element);
-      if (pixelsNeeded <= 0) {
-        break;
-      }
-      this.requestHide(element);
-      element = nextElement;
-    }
-    if (element == startElement) {
-      return bounds;
-    }
-    return lower ?
-      this.range(bounds.lowElement, element) :
-      this.range(element, bounds.highElement);
-  }
-
-  getOffset(element) {
-    return element.offsetTop - this.offsetTop;
-  }
-  
   getValidSize(element) {
     this.ensureValidSize(element);
     return this.sizes.get(element);
