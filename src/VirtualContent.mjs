@@ -15,28 +15,9 @@ const TEMPLATE = `
   display: block;
 }
 
-#emptySpaceSentinelContainer {
-  contain: size layout style;
-  pointer-events: none;
-  visibility: hidden;
-  overflow: visible;
-  position: relative;
-  height: 0px;
-}
-
-#emptySpaceSentinelContainer > div {
-  contain: strict;
-  position: absolute;
-  width: 100%;
-}
-
 ::slotted(*) {
   display: block !important;
   contain: layout style
-}
-
-#outerContainer {
-  contain: layout style;
 }
 
 #innerContainer {
@@ -44,11 +25,8 @@ const TEMPLATE = `
   height: 500px;
 }
 </style>
-<div id="outerContainer">
-  <div id="innerContainer">
-    <div id="emptySpaceSentinelContainer"></div>
-    <slot></slot>
-  </div>
+<div id="innerContainer">
+  <slot></slot>
 </div>
 `;
 
@@ -156,7 +134,6 @@ export class VirtualContent extends HTMLElement {
   mutationObserver;
   resizeObserver;
   innerContainer;
-  emptySpaceSentinelContainer;
 
   totalMeasuredSize = 0;
   measuredCount = 0;
@@ -175,8 +152,6 @@ export class VirtualContent extends HTMLElement {
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
-    this.emptySpaceSentinelContainer =
-        shadowRoot.getElementById('emptySpaceSentinelContainer');
     this.innerContainer =
       shadowRoot.getElementById('innerContainer');
 
