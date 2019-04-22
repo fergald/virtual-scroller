@@ -329,11 +329,12 @@ export class VirtualContent extends HTMLElement {
   }
 
   trimRevealed(bounds, limit) {
+    let toHide = [];
     let low, high;
     bounds.doToAll(e => {
       let rect = e.getBoundingClientRect();
       if (rect.bottom < limit.low || rect.top > limit.high) {
-        this.requestHide(e);
+        toHide.push(e);
       } else {
         if (!low) {
           low = e;
@@ -341,6 +342,9 @@ export class VirtualContent extends HTMLElement {
         high = e;
       }
     });
+    for (const e of toHide) {
+      this.requestHide(e);
+    }
     return this.range(low, high);
   }
 
