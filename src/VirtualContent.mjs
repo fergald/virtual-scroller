@@ -191,7 +191,7 @@ export class VirtualContent extends HTMLElement {
         new IntersectionObserver(this.intersectionObserverCallback);
 
     this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
-    this.resizeObserver = new ResizeObserver(this.resizeObserverCallback);
+    this.resizeObserver = new ResizeObserver(entries => {this.resizeObserverCallback(entries)});
     this.intersectionObserver.observe(this);
 
     // Send a MutationRecord-like object with the current, complete list of
@@ -245,6 +245,7 @@ export class VirtualContent extends HTMLElement {
     let newRevealedBounds = this.revealBounds(windowBounds);
     console.log("newRevealedBounds", newRevealedBounds);
     newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
+    this.measureBounds(newRevealedBounds);
     let newRevealed = newRevealedBounds.elementSet();
     console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
@@ -534,7 +535,11 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  resizeObserverCallback() {
+  resizeObserverCallback(entries) {
+    for (const entry of entries) {
+      this.invalidateSize(entry.target);
+    }
+    this.scheduleUpdate();
   }
 
   onActivateinvisible(e) {
