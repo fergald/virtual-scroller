@@ -20,15 +20,24 @@ const TEMPLATE = `
   contain: layout style
 }
 
-#innerContainer {
-  overflow-y: scroll;
-  height: 500px;
-}
 </style>
-<div id="innerContainer">
-  <slot></slot>
-</div>
+<slot></slot>
 `;
+
+function composedTreeParent(node) {
+  return node.assignedSlot || node.host || node.parentNode;
+}
+
+function nearestScrollingAncestor(node) {
+  for (node = composedTreeParent(node); node !== null;
+       node = composedTreeParent(node)) {
+    if (node.nodeType === Node.ELEMENT_NODE &&
+        node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+  }
+  return null;
+}
 
 // Represents an offset for the scroller. Can be either an pixel
 // offset or an element.
@@ -133,7 +142,6 @@ export class VirtualContent extends HTMLElement {
   intersectionObserver;
   mutationObserver;
   resizeObserver;
-  innerContainer;
 
   totalMeasuredSize = 0;
   measuredCount = 0;
@@ -144,6 +152,7 @@ export class VirtualContent extends HTMLElement {
   useLocking;
   useColor = COLOUR_DEFAULT;
   scrollEventListener;
+  nearestScrollingAncestor;
 
   constructor() {
     super();
@@ -152,8 +161,6 @@ export class VirtualContent extends HTMLElement {
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
-    this.innerContainer =
-      shadowRoot.getElementById('innerContainer');
 
     this.intersectionObserver =
       new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
@@ -202,11 +209,16 @@ export class VirtualContent extends HTMLElement {
   }
 
   setUseScrollEvents(useScrollEvents) {
+    // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
+    let scroller = nearestScrollingAncestor(this);
+    if (!scroller) {
+      return;
+    }
     if (useScrollEvents) {
-      this.innerContainer.addEventListener('scroll', this.scrollEventListener);
+      scroller.addEventListener('scroll', this.scrollEventListener);
     }
     if (!useScrollEvents) {
-      this.innerContainer.removeEventListener('scroll', this.scrollEventListener);
+      scroller.removeEventListener('scroll', this.scrollEventListener);
     }
   }
 
