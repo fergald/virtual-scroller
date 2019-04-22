@@ -162,6 +162,7 @@ export class VirtualContent extends HTMLElement {
   measuredCount = 0;
 
   revealed = new Set();
+  observed = new Set();
 
   useLocking;
   useColor = COLOUR_DEFAULT;
@@ -179,7 +180,7 @@ export class VirtualContent extends HTMLElement {
       shadowRoot.getElementById('innerContainer');
 
     this.intersectionObserver =
-        new IntersectionObserver(this.intersectionObserverCallback);
+      new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
 
     this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.resizeObserver = new ResizeObserver(entries => {this.resizeObserverCallback(entries)});
@@ -244,6 +245,9 @@ export class VirtualContent extends HTMLElement {
     toHide.forEach(e => this.requestHide(e));
     if (this.DEBUG) console.log("revealCount", this.revealCount());
 
+    // Mutates newRevealed.
+    this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+
     let end = performance.now();
     if (this.DEBUG) console.log("sync took: " + (end - start));
   }
@@ -257,6 +261,28 @@ export class VirtualContent extends HTMLElement {
       }
     }
     return result;
+  }
+
+  updateIntersectionObservers(bounds, toObserve) {
+    for (const element of [bounds.lowElement.previousElementSibling, bounds.highElement.nextElementSibling]) {
+      if (element) {
+        toObserve.add(element);
+      }
+    }
+    let toUnobserve = [];
+    for (const element of this.observed) {
+      if (toObserve.has(element)) {
+        toObserve.delete(element);
+      } else {
+        toUnobserve.push(element);
+      }
+    }
+    for (const element of toUnobserve) {
+      this.unobserve(element);
+    }
+    for (const element of toObserve) {
+      this.observe(element);
+    }
   }
 
   revealCount() {
@@ -442,31 +468,21 @@ export class VirtualContent extends HTMLElement {
       DEFAULT_HEIGHT_ESTIMATE;
   }
 
-  intersectionObserverCallback = (entries) => {
-    /*
-    for (const {target, isIntersecting} of entries) {
-      // Update if the <virtual-content> has moved into or out of the viewport.
-      if (target === this) {
-        this.scheduleUpdate();
-        break;
-      }
+  intersectionObserverCallback(entries) {
+    // TODO(fergal): Once the scroller goes off screen it should stop
+    // updating and only start updating once it's back on-screen
+    // again.
+    this.scheduleUpdate();
+  }
 
-      const targetParent = target.parentNode;
+  observe(element) {
+    this.intersectionObserver.observe(element);
+    this.observed.add(element);
+  }
 
-      // Update if an empty space sentinel has moved into the viewport.
-      if (targetParent === this.emptySpaceSentinelContainer &&
-          isIntersecting) {
-        this.scheduleUpdate();
-        break;
-      }
-
-      // Update if a child has moved out of the viewport.
-      if (targetParent === this && !isIntersecting) {
-        this.scheduleUpdate();
-        break;
-      }
-    }
-    */
+  unobserve(element) {
+    this.intersectionObserver.unobserve(element);
+    this.observed.delete(element);
   }
 
   removeElement(element) {
@@ -474,6 +490,9 @@ export class VirtualContent extends HTMLElement {
     // them for resize so we should discard any size info we have to them as it
     // may become incorrect.
     this.resizeObserver.unobserve(element);
+    if (this.observed.has(element)) {
+      this.unobserve();
+    }
     this.hide(element);
     this.sizes.delete(element);
     this.sizeValid.delete(element);
