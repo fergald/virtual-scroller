@@ -344,6 +344,9 @@ export class VirtualContent extends HTMLElement {
       }
       return;
     }
+    if (!this.getRevealed()) {
+      throw "Called ensureValidSize on locked element " + element;
+    }
     let oldSize = this.sizes.get(element);
     if (oldSize === undefined) {
       oldSize = 0;
