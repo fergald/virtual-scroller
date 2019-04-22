@@ -158,8 +158,6 @@ export class VirtualContent extends HTMLElement {
   innerContainer;
   emptySpaceSentinelContainer;
 
-  revealedBounds;
-
   totalMeasuredSize = 0;
   measuredCount = 0;
 
