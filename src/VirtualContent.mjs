@@ -29,6 +29,8 @@ function composedTreeParent(node) {
 }
 
 function nearestScrollingAncestor(node) {
+  // TODO(fergal): This returns the HTML element but in that case we
+  // need the document.
   for (node = composedTreeParent(node); node !== null;
        node = composedTreeParent(node)) {
     if (node.nodeType === Node.ELEMENT_NODE &&
