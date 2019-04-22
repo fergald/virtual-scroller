@@ -478,6 +478,7 @@ export class VirtualContent extends HTMLElement {
     this.resizeObserver.unobserve(element);
     this.hide(element);
     this.sizes.delete(element);
+    this.sizeValid.delete(element);
   }
 
   addElement(element) {
