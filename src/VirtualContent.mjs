@@ -4,13 +4,6 @@ const BUFFER = .2;
 let LOCKING_DEFAULT = true;
 let COLOUR_DEFAULT = true;
 
-function DLOG(...messages) {
-  if (!DEBUG) {
-    return;
-  }
-  console.log(...messages);
-}
-
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 const TEMPLATE = `
 <style>
@@ -235,7 +228,7 @@ export class VirtualContent extends HTMLElement {
 
   sync() {
     let start = performance.now();
-    console.log("sync");
+    if (this.DEBUG) console.log("sync");
 
     if (this.childNodes.length == 0) {
       return;
@@ -243,18 +236,18 @@ export class VirtualContent extends HTMLElement {
 
     let windowBounds = new Range(0, window.innerHeight);
     let newRevealedBounds = this.revealBounds(windowBounds);
-    console.log("newRevealedBounds", newRevealedBounds);
+    if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
     newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
     this.measureBounds(newRevealedBounds);
     let newRevealed = newRevealedBounds.elementSet();
-    console.log("newRevealedBounds after trim", newRevealedBounds);
+    if (this.DEBUG) console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
-    console.log("toHide", toHide);
+    if (this.DEBUG) console.log("toHide", toHide);
     toHide.forEach(e => this.requestHide(e));
-    console.log("revealCount", this.revealCount());
+    if (this.DEBUG) console.log("revealCount", this.revealCount());
 
     let end = performance.now();
-    console.log("sync took: " + (end - start));
+    if (this.DEBUG) console.log("sync took: " + (end - start));
   }
 
   // a - b
