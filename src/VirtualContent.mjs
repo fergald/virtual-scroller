@@ -249,8 +249,8 @@ export class VirtualContent extends HTMLElement {
     console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
     console.log("toHide", toHide);
-    this.setDifference(this.revealed, newRevealed).forEach(e => this.requestHide(e));
-    // console.log("revealCount", this.revealCount());
+    toHide.forEach(e => this.requestHide(e));
+    console.log("revealCount", this.revealCount());
 
     let end = performance.now();
     console.log("sync took: " + (end - start));
