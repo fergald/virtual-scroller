@@ -273,7 +273,7 @@ export class VirtualContent extends HTMLElement {
     return count;
   }
 
-  findElement(offset) {
+  findElement(offset, bias) {
     let low = 0;
     let high = this.children.length - 1;
     let i;
@@ -289,12 +289,12 @@ export class VirtualContent extends HTMLElement {
         break;
       }
     }
-    return this.children[i];
+    return this.children[bias < 0 ? low : high];
   }
 
   revealHopefulBounds(bounds) {
-    let lowElement = this.findElement(bounds.low);
-    let highElement = this.findElement(bounds.high);
+    let lowElement = this.findElement(bounds.low, /* bias= */ -1);
+    let highElement = this.findElement(bounds.high, /* bias= */ 1);
 
     return this.range(lowElement, highElement);
   }
