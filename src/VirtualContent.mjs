@@ -2,7 +2,7 @@ const DEBUG = true;
 const BUFFER = .2;
 
 let LOCKING_DEFAULT = true;
-let COLOUR_DEFAULT = false;
+let COLOUR_DEFAULT = true;
 
 function DLOG(...messages) {
   if (!DEBUG) {
@@ -173,7 +173,7 @@ export class VirtualContent extends HTMLElement {
   revealed = new Set();
 
   useLocking;
-  useColor = true;
+  useColor = COLOUR_DEFAULT;
 
   constructor() {
     super();
