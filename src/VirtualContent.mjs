@@ -268,13 +268,18 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealCount() {
-    let count = 0;
-    for (const element of this.children) {
-      if (this.getRevealed(element)) {
-        count++;
+    if (DEBUG) {
+      let count = 0;
+      for (const element of this.children) {
+        if (this.getRevealed(element)) {
+          count++;
+        }
+      }
+      if (count != this.revealed.size) {
+        throw "count != this.revealed: " + count + ", " + this.revealed.size;
       }
     }
-    return count;
+    return this.revealed.size;
   }
 
   findElement(offset, bias) {
