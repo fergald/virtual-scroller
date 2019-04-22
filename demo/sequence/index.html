@@ -14,6 +14,9 @@
 
     let vc = document.createElement("virtual-content");
     vc.setUseLocking(useLocking.checked);
+    if (useScrollEvents.checked) {
+      vc.useScrollEvents();
+    }
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
     for (let i = 0; i < elementCount.value; i++) {
@@ -61,6 +64,7 @@
   Element Count: <input id=elementCount value=1000>
   Word Count: <input id=wordCount value=100>
   Use Display Locking: <input id=useLocking type=checkbox>
+  Use Scroll Events: <input id=useScrollEvents type=checkbox>
   <br>
   <input type=button onClick="populate()" value="Go" id=goButton>
   <input type=button onClick="jump()" value="Jump" id=jumpButton>

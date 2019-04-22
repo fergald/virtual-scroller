@@ -166,6 +166,7 @@ export class VirtualContent extends HTMLElement {
 
   useLocking;
   useColor = COLOUR_DEFAULT;
+  usingScrollEvents = false;
 
   constructor() {
     super();
@@ -209,10 +210,6 @@ export class VirtualContent extends HTMLElement {
     this.addEventListener(
         'activateinvisible', this.onActivateinvisible, {capture: true});
 
-    this.innerContainer.addEventListener('scroll', (e) => {
-      this.scheduleUpdate();
-    });
-
     this.scheduleUpdate();
   }
 
@@ -223,6 +220,16 @@ export class VirtualContent extends HTMLElement {
     } else {
       this.useLocking = useLocking;
     }
+  }
+
+  useScrollEvents() {
+    if (!this.usingScrollEvents) {
+      this.innerContainer.addEventListener('scroll', (e) => {
+        this.scheduleUpdate();
+      });
+    }
+
+    this.usingScrollEvents = true;
   }
 
   sync() {
