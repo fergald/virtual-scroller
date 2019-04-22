@@ -234,6 +234,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   sync() {
+    let start = performance.now();
     console.log("sync");
 
     if (this.childNodes.length == 0) {
@@ -249,7 +250,10 @@ export class VirtualContent extends HTMLElement {
     let toHide = this.setDifference(this.revealed, newRevealed);
     console.log("toHide", toHide);
     this.setDifference(this.revealed, newRevealed).forEach(e => this.requestHide(e));
-    console.log("revealCount", this.revealCount());
+    // console.log("revealCount", this.revealCount());
+
+    let end = performance.now();
+    console.log("sync took: " + (end - start));
   }
 
   // a - b
