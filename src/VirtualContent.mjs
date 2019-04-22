@@ -440,11 +440,6 @@ export class VirtualContent extends HTMLElement {
                      lowElement, highElement);
   }
 
-  getValidSize(element) {
-    this.ensureValidSize(element);
-    return this.sizes.get(element);
-  }
-
   getHopefulSize(element) {
     let size = this.sizes.get(element);
     return size === undefined ? this.getAverageSize() : size;
