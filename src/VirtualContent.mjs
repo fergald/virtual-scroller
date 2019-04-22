@@ -376,9 +376,13 @@ export class VirtualContent extends HTMLElement {
   }
 
   getRevealed(element) {
-    return this.useLocking ?
-      !element.displayLock.locked :
-      element.style.color != "red";
+    if (this.useLocking) {
+      return !element.displayLock.locked
+    } else if (this.useColor) {
+      return element.style.color != "red";
+    } else {
+      return this.revealed.has(element);
+    }
   }
 
   reveal(element) {
@@ -408,7 +412,9 @@ export class VirtualContent extends HTMLElement {
 
   requestReveal(element) {
     if (this.getRevealed(element)) {
-      console.log(element, "is already unlocked");
+      if (DEBUG) {
+        throw "is already revealed: " + element;
+      }
     } else {
       this.reveal(element);
     }
@@ -416,7 +422,9 @@ export class VirtualContent extends HTMLElement {
 
   requestHide(element) {
     if (!this.getRevealed(element)) {
-      console.log(element, "is already locked");
+      if (DEBUG) {
+        throw "is already hidden: " + element;
+      }
     } else {
       this.hide(element);
     }
@@ -485,6 +493,7 @@ export class VirtualContent extends HTMLElement {
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
     this.resizeObserver.observe(element);
+    this.revealed.add(element);
     return this.requestHide(element);
   }
 
