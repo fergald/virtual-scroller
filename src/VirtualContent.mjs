@@ -211,7 +211,7 @@ export class VirtualContent extends HTMLElement {
     this.innerContainer.addEventListener('scroll', (e) => {
       this.scheduleUpdate();
     });
-      
+
     this.scheduleUpdate();
   }
 
@@ -299,7 +299,7 @@ export class VirtualContent extends HTMLElement {
 
     return this.range(lowElement, highElement);
   }
-  
+
   revealBounds(bounds) {
     let previous;
     while (true) {
