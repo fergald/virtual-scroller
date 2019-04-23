@@ -397,13 +397,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   getRevealed(element) {
-    if (this.useLocking) {
-      return !element.displayLock.locked
-    } else if (this.useColor) {
-      return element.style.color != "red";
-    } else {
-      return this.revealed.has(element);
-    }
+    return this.revealed.has(element);
   }
 
   reveal(element) {
