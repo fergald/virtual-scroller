@@ -36,7 +36,9 @@
   window.jump = jump;
 
   function onChangeUseScrollEvents() {
-    vc.setUseScrollEvents(useScrollEvents.checked);
+    if (vc) {
+      vc.setUseScrollEvents(useScrollEvents.checked);
+    }
   }
   window.onChangeUseScrollEvents = onChangeUseScrollEvents;
 
