@@ -156,6 +156,9 @@ export class VirtualContent extends HTMLElement {
   scrollEventListener;
   nearestScrollingAncestor;
 
+  useIntersection = false;
+  intersecting = new Map();
+
   constructor() {
     super();
 
@@ -210,6 +213,10 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
+  setUseIntersection(useIntersection) {
+    this.useIntersection = useIntersection;
+  }
+
   setUseScrollEvents(useScrollEvents) {
     // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
     let scroller = nearestScrollingAncestor(this);
@@ -232,20 +239,35 @@ export class VirtualContent extends HTMLElement {
       return;
     }
 
-    let windowBounds = new Range(0, window.innerHeight);
-    let newRevealedBounds = this.revealBounds(windowBounds);
-    if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
-    newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
-    this.measureBounds(newRevealedBounds);
-    let newRevealed = newRevealedBounds.elementSet();
-    if (this.DEBUG) console.log("newRevealedBounds after trim", newRevealedBounds);
-    let toHide = this.setDifference(this.revealed, newRevealed);
-    if (this.DEBUG) console.log("toHide", toHide);
-    toHide.forEach(e => this.requestHide(e));
-    if (this.DEBUG) console.log("revealCount", this.revealCount());
+    if (this.useIntersection) {
+      for (const [element, intersecting] of this.intersecting) {
+        if (intersecting) {
+          this.ensureReveal(element);
+        } else {
+          this.ensureHide(element);
+        }
+        // Is this safe?
+        delete this.intersecting.delete(element);
+      }
+      if (this.intersecting.length) {
+        throw "Still intersecting: " + this.intersecting.length;
+      }
+    } else {
+      let windowBounds = new Range(0, window.innerHeight);
+      let newRevealedBounds = this.revealBounds(windowBounds);
+      if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
+      newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
+      this.measureBounds(newRevealedBounds);
+      let newRevealed = newRevealedBounds.elementSet();
+      if (this.DEBUG) console.log("newRevealedBounds after trim", newRevealedBounds);
+      let toHide = this.setDifference(this.revealed, newRevealed);
+      if (this.DEBUG) console.log("toHide", toHide);
+      toHide.forEach(e => this.requestHide(e));
+      // Mutates newRevealed.
+      this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+    }
 
-    // Mutates newRevealed.
-    this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+    if (this.DEBUG) console.log("revealCount", this.revealCount());
 
     let end = performance.now();
     if (this.DEBUG) console.log("sync took: " + (end - start));
@@ -425,6 +447,12 @@ export class VirtualContent extends HTMLElement {
     this.invalidateSize(element);
   }
 
+  ensureReveal(element) {
+    if (!this.getRevealed(element)) {
+      this.reveal(element);
+    }
+  }
+
   requestReveal(element) {
     if (this.getRevealed(element)) {
       if (DEBUG) {
@@ -432,6 +460,12 @@ export class VirtualContent extends HTMLElement {
       }
     } else {
       this.reveal(element);
+    }
+  }
+
+  ensureHide(element) {
+    if (this.getRevealed(element)) {
+      this.hide(element);
     }
   }
 
@@ -465,6 +499,14 @@ export class VirtualContent extends HTMLElement {
     // TODO(fergal): Once the scroller goes off screen it should stop
     // updating and only start updating once it's back on-screen
     // again.
+    if (this.useIntersection) {
+      for (const entry of entries) {
+        if (entry.target == this) {
+          continue;
+        }
+        this.intersecting.set(entry.target, entry.intersectionRatio > 0);
+      }
+    }
     this.scheduleUpdate();
   }
 
@@ -486,6 +528,9 @@ export class VirtualContent extends HTMLElement {
     if (this.observed.has(element)) {
       this.unobserve();
     }
+    if (this.useIntersection) {
+      delete this.intersection[element];
+    }
     this.hide(element);
     this.sizes.delete(element);
     this.sizeValid.delete(element);
@@ -498,6 +543,9 @@ export class VirtualContent extends HTMLElement {
     // (which could be a lot).
     this.resizeObserver.observe(element);
     this.revealed.add(element);
+    if (this.useIntersection) {
+      this.observe(element);
+    }
     return this.requestHide(element);
   }
 
