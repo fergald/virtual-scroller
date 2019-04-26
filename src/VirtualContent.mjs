@@ -1,6 +1,8 @@
 const DEBUG = true;
 const BUFFER = .2;
 
+let WATCH = new Set(["p7", "p8", "p9"]);
+
 let LOCKING_DEFAULT = true;
 let COLOUR_DEFAULT = true;
 
@@ -252,6 +254,7 @@ export class VirtualContent extends HTMLElement {
         throw "Still intersecting: " + this.revealedDiff.length;
       }
     } else {
+      this.getBoundingClientRect();
       let windowBounds = new Range(0, window.innerHeight);
       let newRevealedBounds = this.revealBounds(windowBounds);
       if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
@@ -268,8 +271,29 @@ export class VirtualContent extends HTMLElement {
 
     if (this.DEBUG) console.log("revealCount", this.revealCount());
 
+    this.validateLocks();
     let end = performance.now();
     if (this.DEBUG) console.log("sync took: " + (end - start));
+  }
+
+  validateLocks() {
+    let bad = [];
+    this.getBoundingClientRect();
+    for (const element of this.children) {
+      let locked = element.displayLock.locked;
+      let revealed = this.revealed.has(element);
+      if (locked == revealed) {
+        bad.push([element, locked, revealed]);
+      }
+      if (WATCH.has(element.id)) {
+        console.log(element, locked, revealed);
+      }
+    }
+    if (bad.length > 0) {
+      let error = Error("mismatch");
+      error.bad = bad;
+      // throw error;
+    }
   }
 
   // a - b
@@ -349,8 +373,11 @@ export class VirtualContent extends HTMLElement {
   revealBounds(bounds) {
     let previous;
     while (true) {
+      console.log("revealBounds - loop");
+      this.validateLocks();
       let reveal = this.revealHopefulBounds(bounds);
       if (previous && reveal.sameEnds(previous)) {
+        this.validateLocks();
         return reveal;
       }
       previous = reveal;
@@ -422,16 +449,26 @@ export class VirtualContent extends HTMLElement {
   }
 
   reveal(element) {
+    if (WATCH.has(element.id)) {
+      console.log("revealing", element, new Error());
+    }
     this.revealed.add(element);
     if (this.useColor) {
       element.style.color = "green";
     }
     if (this.useLocking) {
-      element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
+      element.displayLock.commit().then(null, reason => {
+        console.log("Rejected: ", element)
+        console.log("Rejected: ", reason.message)
+      });
+      console.log("locked" + element.displayLock.locked);
     }
   }
 
   hide(element) {
+    if (WATCH.has(element.id)) {
+      console.log("hiding", element, new Error());
+    }
     this.revealed.delete(element);
     if (this.useColor) {
       element.style.color = "red";
@@ -441,7 +478,10 @@ export class VirtualContent extends HTMLElement {
         timeout: Infinity,
         activatable: true,
         size: [10, this.getHopefulSize(element)],
-      }).then(null, reason => {console.log("Rejected: ", reason.message)});
+      }).then(null, reason => {
+        console.log("Rejected: ", element)
+        console.log("Rejected: ", reason.message)
+      });
     }
     this.invalidateSize(element);
   }
@@ -460,6 +500,7 @@ export class VirtualContent extends HTMLElement {
     } else {
       this.reveal(element);
     }
+    this.validateLocks();
   }
 
   ensureHide(element) {
