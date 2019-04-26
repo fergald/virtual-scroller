@@ -149,6 +149,7 @@ export class VirtualContent extends HTMLElement {
   measuredCount = 0;
 
   revealed = new Set();
+  revealedDiff = new Map();
   observed = new Set();
 
   useLocking;
@@ -157,7 +158,6 @@ export class VirtualContent extends HTMLElement {
   nearestScrollingAncestor;
 
   useIntersection = false;
-  intersecting = new Map();
 
   constructor() {
     super();
@@ -240,17 +240,17 @@ export class VirtualContent extends HTMLElement {
     }
 
     if (this.useIntersection) {
-      for (const [element, intersecting] of this.intersecting) {
-        if (intersecting) {
+      for (const [element, revealed] of this.revealedDiff) {
+        if (revealed) {
           this.ensureReveal(element);
         } else {
           this.ensureHide(element);
         }
         // Is this safe?
-        delete this.intersecting.delete(element);
+        this.revealedDiff.delete(element);
       }
-      if (this.intersecting.length) {
-        throw "Still intersecting: " + this.intersecting.length;
+      if (this.revealedDiff.length) {
+        throw "Still intersecting: " + this.revealedDiff.length;
       }
     } else {
       let windowBounds = new Range(0, window.innerHeight);
@@ -504,7 +504,7 @@ export class VirtualContent extends HTMLElement {
         if (entry.target == this) {
           continue;
         }
-        this.intersecting.set(entry.target, entry.intersectionRatio > 0);
+        this.revealedDiff.set(entry.target, entry.intersectionRatio > 0);
       }
     }
     this.scheduleUpdate();
