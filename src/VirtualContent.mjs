@@ -217,9 +217,8 @@ export class VirtualContent extends HTMLElement {
     this.useIntersection = useIntersection;
   }
 
-  setUseScrollEvents(useScrollEvents) {
+  setUseScrollEvents(useScrollEvents, scroller) {
     // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
-    let scroller = nearestScrollingAncestor(this);
     if (!scroller) {
       return;
     }

@@ -17,7 +17,7 @@
     vc = document.createElement("virtual-content");
     vc.setUseLocking(useLocking.checked);
     vc.setUseIntersection(useIntersection.checked);
-    vc.setUseScrollEvents(useScrollEvents.checked);
+    vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
     for (let i = 0; i < elementCount.value; i++) {
@@ -38,7 +38,7 @@
 
   function onChangeUseScrollEvents() {
     if (vc) {
-      vc.setUseScrollEvents(useScrollEvents.checked);
+      vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
     }
   }
   window.onChangeUseScrollEvents = onChangeUseScrollEvents;
