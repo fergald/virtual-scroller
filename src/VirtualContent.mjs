@@ -293,6 +293,7 @@ export class VirtualContent extends HTMLElement {
       let error = Error("mismatch");
       error.bad = bad;
       // throw error;
+      console.log("bad locked elements", bad);
     }
   }
 
