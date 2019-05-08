@@ -46,3 +46,4 @@ cd ..
 ln -sfT "$sha" "$revision"
 git add "$revision"
 git commit -a -m"Update $revision->$sha"
+git push
