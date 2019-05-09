@@ -272,6 +272,29 @@ export class VirtualContent extends HTMLElement {
     if (this.DEBUG) console.log("sync took: " + (end - start));
   }
 
+  logInfo() {
+    console.log("revealCount", this.revealCount());
+    let bad = this.findBadLocks();
+    if (bad.length > 0) {
+      console.log("Bad locks", bad);
+    } else {
+      console.log("No bad locks");
+    }
+  }
+
+  findBadLocks() {
+    let bad = [];
+    this.getBoundingClientRect();
+    for (const element of this.children) {
+      let locked = element.displayLock.locked;
+      let revealed = this.revealed.has(element);
+      if (locked == revealed) {
+        bad.push([element, locked, revealed]);
+      }
+    }
+    return bad;
+  }
+
   // a - b
   setDifference(a, b) {
     let result = new Set();

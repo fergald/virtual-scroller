@@ -41,6 +41,11 @@
   }
   window.resize = resize;
 
+  function logInfo() {
+    vc.logInfo();
+  }
+  window.logInfo = logInfo;
+
   function onChangeUseScrollEvents() {
     if (vc) {
       vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
@@ -84,5 +89,6 @@
   <input type=button onClick="populate()" value="Go" id=goButton>
   <input type=button onClick="jump()" value="Jump" id=jumpButton>
   <input type=button onClick="resize()" value="Resize" id=resizeButton>
+  <input type=button onClick="logInfo()" value="LogInfo" id=logInfoButton>
 </div>
 <div id=contentDiv style="overflow: scroll; height: 400px"></div>
