@@ -343,6 +343,17 @@ export class VirtualContent extends HTMLElement {
     return this.revealed.size;
   }
 
+  getBoundingClientRect(e) {
+    let start = performance.now();
+    let rect = e.getBoundingClientRect()
+    let duration = performance.now() - start;
+    if (duration > 1) {
+      console.log("getBCR", duration);
+      console.log(new Error());
+    }
+    return rect;
+  }
+
   findElement(offset, bias) {
     let low = 0;
     let high = this.children.length - 1;
@@ -350,7 +361,8 @@ export class VirtualContent extends HTMLElement {
     while (low < high) {
       i = Math.floor((low + high)/2);
       let element = this.children[i];
-      let rect = element.getBoundingClientRect()
+      let rect = this.getBoundingClientRect(element);
+
       if (rect.top > offset) {
         high = i - 1;
       } else if (rect.bottom < offset) {
@@ -393,7 +405,7 @@ export class VirtualContent extends HTMLElement {
     let toHide = [];
     let low, high;
     bounds.doToAll(e => {
-      let rect = e.getBoundingClientRect();
+      let rect = this.getBoundingClientRect(e);
       if (rect.bottom < limit.low || rect.top > limit.high) {
         toHide.push(e);
       } else {
@@ -502,7 +514,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   range(lowElement, highElement) {
-    return new Range(lowElement.getBoundingClientRect().top, highElement.getBoundingClientRect().bottom,
+    return new Range(this.getBoundingClientRect(lowElement).top, this.getBoundingClientRect(highElement).bottom,
                      lowElement, highElement);
   }
 
