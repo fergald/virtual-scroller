@@ -49,3 +49,10 @@ git commit -a -m"Update $revision->$sha"
 git push
 
 git checkout -
+base=$(git remote show -n origin|grep "Fetch URL" | perl -lne 'print "https://$1.github.io/$2" if m#github.com:(.*?)/(.*)#')
+if [ -z "$base" ]; then
+    echo >2 "Couldn't get base"
+    exit 1
+fi
+
+echo Published to "$base/versions/$revision"
