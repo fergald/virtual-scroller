@@ -1,0 +1,122 @@
+Lays out some text so that we can observe performance of layout with/without locking.<br>
+
+Select your parameters, start tracing in the debug tool and hit
+Go. Then go look at the time spent in layout. <br>
+<br>
+Desired number of elements: <input type=input value=100 id=elementCount><br>
+Use locking? <input type=checkbox id=useLocking><br>
+Use update? (will force locking): <input type=checkbox id=useUpdate onClick="if (useUpdate.checked) { useLocking.checked = true }"><br>
+Use bold every n words? (0=no bold)<input type=input id=useBold value=0><br>
+<input type=button value=go onClick="go()"><br>
+<input type=button value=stop onClick="stop()"><br>
+<style>
+div {
+  display: block !important;
+  contain: layout style;
+  font-size: 10pt;
+}
+</style>
+
+
+<div id=stats>
+</div>
+<div id=contentDiv>
+</div>
+
+<script>
+  class Locker {
+    lock(element) {
+      element.displayLock.acquire({
+        timeout: Infinity,
+        activatable: true,
+        size: [10, 50],
+      }).then(null, reason => {console.log("Rejected: ", reason.message)});
+      if (useUpdate.checked) {
+        element.displayLock.update().then(null, reason => {console.log("Rejected: ", reason.message)});
+      }
+    }
+
+    unlock(element) {
+      element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
+    }
+  }
+
+  let locker = new Locker();
+
+  function getBCR(e) {
+    let t = performance.now();
+    e.getBoundingClientRect();
+    console.log("Took: ", performance.now() - t, e);
+  }
+
+  function construct() {
+    const wordCount = 50;
+
+    let words = "";
+    let bold = Math.floor(useBold.value);
+    for (let i = 0; i < wordCount; i++) {
+      if (bold && (i % bold == 0)) {
+        words += " <span style='font-weigh:bold'>word</span>";
+      } else {
+        words += " word";
+      }
+    }
+
+    for (let n = 0; n < elementCount.value; n++) {
+      let newDiv = document.createElement("div");
+      contentDiv.appendChild(newDiv);
+      newDiv.innerHTML = `${n} ${words}`;
+      newDiv.id = "p" + n;
+      if (useLocking.checked) {
+        locker.lock(newDiv);
+      }
+    }
+  //  getBCR(contentDiv);
+  }
+
+  function unlock() {
+    console.log("Start unlocking");
+    //    getBCR(contentDiv);
+    for (const e of contentDiv.children) {
+      locker.unlock(e);
+    }
+  }
+
+  function forceLayout() {
+    getBCR(contentDiv);
+    console.log("Done");
+  }
+
+  let i = 100;
+  function go() {
+    i = 100;
+    doIfI();
+  }
+
+  function stop() {
+    i = -1;
+  }
+
+  function doIfI() {
+    console.log(i);
+    if (i-- < 0) {
+      return;
+    }
+    contentDiv.innerHTML = "";
+    getBCR(contentDiv);
+    construct();
+    getBCR(contentDiv);
+    if (useLocking.checked) {
+      setTimeout(() => {
+        unlock();
+        forceLayout();
+        doIfI();
+      }, 0);
+    } else {
+      forceLayout();
+      setTimeout(() => {
+        doIfI();
+      }, 0);
+    }
+  }
+</script>
