@@ -22,10 +22,29 @@ div {
 </div>
 
 <script type="module">
-  import * as Words from '../util/Words.mjs';
-  import * as Locker from '../util/Locker.mjs'
+  function words(wordCount, boldEvery) {
+    let words = "";
+    boldEvery = Math.floor(boldEvery);
+    for (let i = 0; i < wordCount; i++) {
+      if (boldEvery && (i % boldEvery == 0)) {
+        words += " <span>word</span>";
+      } else {
+        words += " word";
+      }
+    }
+    return words;
+  }
 
-  let locker = new Locker.Locker();
+  function divs(divCount, content) {
+    let divs = [];
+    for (let n = 0; n < divCount; n++) {
+      let newDiv = document.createElement("div");
+      newDiv.innerHTML = `${n} ${content}`;
+      newDiv.id = "p" + n;
+      divs.push(newDiv);
+    }
+    return divs;
+  }
 
   function getBCR(e, time) {
     if (time) {
@@ -38,9 +57,9 @@ div {
   }
 
   function construct(useBold) {
-    let words = Words.words(50, useBold);
-    let divs = Words.divs(elementCount.value, words);
-    for (const e of divs) {
+    let w = words(50, useBold);
+    let d = divs(elementCount.value, w);
+    for (const e of d) {
       contentDiv.appendChild(e);
     }
   }
