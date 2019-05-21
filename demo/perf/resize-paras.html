@@ -1,4 +1,4 @@
-Created 1000 paragraphs of locked content and resizes it in a loop.<br>
+Create <input id=divCount value=10000> paragraphs of locked content and resizes it in a loop.<br>
 
 <input type=button value=go onClick="go()"><br>
 <input type=button value=stop onClick="stop()"><br>
@@ -30,12 +30,12 @@ div {
 
   function construct() {
     let words = Words.words(50);
-    let divs = Words.divs(1000, words);
+    let divs = Words.divs(divCount.value, words);
     let i = 0;
     for (const e of divs) {
       contentDiv.appendChild(e);
-      if (i++ > 10) {
-//        locker.lock(e);
+      if (i++ > 0) {
+        locker.lock(e);
       }
     }
   }
@@ -43,6 +43,7 @@ div {
   let i = 100;
   function go() {
     i = 100;
+    contentDiv.innerHTML = "";
     construct();
     console.log("Constructed");
     doIfI();
