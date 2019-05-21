@@ -1,0 +1,85 @@
+Lays out some text with b-tabs and the same text without b-tags.
+
+Select your parameters, start tracing in the debug tool and hit
+Go. Then go look at the time spent in layout. <br>
+<br>
+Desired number of paragraphs: <input type=input value=100 id=elementCount><br>
+Use bold every n words? (0=no bold)<input type=input id=useBold value=1><br>
+<input type=button value=go onClick="go()"><br>
+<input type=button value=stop onClick="stop()"><br>
+<style>
+div {
+  display: block !important;
+  contain: layout style;
+  font-size: 10pt;
+}
+</style>
+
+
+<div id=stats>
+</div>
+<div id=contentDiv>
+</div>
+
+<script type="module">
+  import * as Words from '../util/Words.mjs';
+  import * as Locker from '../util/Locker.mjs'
+
+  let locker = new Locker.Locker();
+
+  function getBCR(e, time) {
+    if (time) {
+      console.time(time);
+    }
+    e.getBoundingClientRect();
+    if (time) {
+      console.timeEnd(time);
+    }
+  }
+
+  function construct(useBold) {
+    let words = Words.words(50, useBold);
+    let divs = Words.divs(elementCount.value, words);
+    for (const e of divs) {
+      contentDiv.appendChild(e);
+    }
+  }
+
+  function unlock() {
+    console.log("Start unlocking");
+    //    getBCR(contentDiv);
+    for (const e of contentDiv.children) {
+      locker.unlock(e);
+    }
+  }
+
+  let i = 100;
+  function go() {
+    i = 100;
+    doIfI();
+  }
+  window.go = go;
+
+  function stop() {
+    i = -1;
+  }
+  window.stop = stop;
+
+  function doIfI() {
+    console.log(i);
+    if (i-- < 0) {
+      return;
+    }
+    contentDiv.innerHTML = "";
+    getBCR(contentDiv);
+    construct(useBold.value);
+    getBCR(contentDiv, "has bold");
+    contentDiv.innerHTML = "";
+    getBCR(contentDiv);
+    construct(0);
+    getBCR(contentDiv, "has no bold");
+    setTimeout(() => {
+      doIfI();
+    }, 0);
+  }
+</script>
