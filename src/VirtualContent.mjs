@@ -158,6 +158,7 @@ export class VirtualContent extends HTMLElement {
   nearestScrollingAncestor;
 
   useIntersection = false;
+  useForcedLayout = false;
 
   constructor() {
     super();
@@ -217,6 +218,10 @@ export class VirtualContent extends HTMLElement {
     this.useIntersection = useIntersection;
   }
 
+  setUseForcedLayouts(useForcedLayouts) {
+    this.useForcedLayouts = useForcedLayouts;
+  }
+
   setUseScrollEvents(useScrollEvents, scroller) {
     // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
     if (!scroller) {
@@ -253,10 +258,18 @@ export class VirtualContent extends HTMLElement {
       }
     } else {
       let windowBounds = new Range(0, window.innerHeight);
-      let newRevealedBounds = this.revealBounds(windowBounds);
-      if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
-      newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
-      this.measureBounds(newRevealedBounds);
+      let newRevealedBounds;
+      if (this.useForcedLayouts) {
+        newRevealedBounds = this.revealBounds(windowBounds);
+        if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
+        newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
+        this.measureBounds(newRevealedBounds);
+      } else {
+        // Grab sizes of all revealed elements for the record.
+        this.measureRevealed();
+        let windowBounds = new Range(0, window.innerHeight);
+        newRevealedBounds = this.revealHopefulBounds(windowBounds);
+      }
       let newRevealed = newRevealedBounds.elementSet();
       if (this.DEBUG) console.log("newRevealedBounds after trim", newRevealedBounds);
       let toHide = this.setDifference(this.revealed, newRevealed);
@@ -264,6 +277,18 @@ export class VirtualContent extends HTMLElement {
       toHide.forEach(e => this.requestHide(e));
       // Mutates newRevealed.
       this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+
+      if (!this.useForcedLayouts) {
+        let toReveal = this.setDifference(newRevealed, this.revealed);
+        if (this.DEBUG) console.log("toHide", toHide);
+        toReveal.forEach(e => this.requestReveal(e));
+        // If we are being lazy and not forcing layouts, we need to
+        // check again in the next frame to see if we have more work
+        // to do.
+        if (toHide.size > 0 || toReveal.size > 0) {
+          this.scheduleUpdate();
+        }
+      }
     }
 
     if (this.DEBUG) console.log("revealCount", this.revealCount());
@@ -438,6 +463,12 @@ export class VirtualContent extends HTMLElement {
 
   measureBounds(bounds) {
     bounds.doToAll(element => {this.ensureValidSize(element)});
+  }
+
+  measureRevealed() {
+    for (const element of this.revealed) {
+      this.ensureValidSize(element);
+    }
   }
 
   getRevealed(element) {
