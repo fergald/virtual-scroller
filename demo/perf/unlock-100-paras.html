@@ -23,7 +23,8 @@ div {
 <div id=contentDiv>
 </div>
 
-<script>
+<script type="module">
+  import * as Words from '../util/Words.mjs';
   class Locker {
     lock(element) {
       element.displayLock.acquire({
@@ -50,28 +51,14 @@ div {
   }
 
   function construct() {
-    const wordCount = 50;
-
-    let words = "";
-    let bold = Math.floor(useBold.value);
-    for (let i = 0; i < wordCount; i++) {
-      if (bold && (i % bold == 0)) {
-        words += " <span style='font-weigh:bold'>word</span>";
-      } else {
-        words += " word";
-      }
-    }
-
-    for (let n = 0; n < elementCount.value; n++) {
-      let newDiv = document.createElement("div");
-      contentDiv.appendChild(newDiv);
-      newDiv.innerHTML = `${n} ${words}`;
-      newDiv.id = "p" + n;
+    let words = Words.words(50, useBold.value);
+    let divs = Words.divs(elementCount.value, words);
+    for (const e of divs) {
+      contentDiv.appendChild(e);
       if (useLocking.checked) {
-        locker.lock(newDiv);
+        locker.lock(e);
       }
     }
-  //  getBCR(contentDiv);
   }
 
   function unlock() {
@@ -92,10 +79,12 @@ div {
     i = 100;
     doIfI();
   }
+  window.go = go;
 
   function stop() {
     i = -1;
   }
+  window.stop = stop;
 
   function doIfI() {
     console.log(i);
