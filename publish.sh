@@ -58,3 +58,6 @@ if [ -z "$base" ]; then
 fi
 
 echo Published to "$base/versions/$revision"
+if [ "$sha" != "$revision" ]; then
+    echo Published to "$base/versions/$sha"
+fi
