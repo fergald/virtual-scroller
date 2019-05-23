@@ -29,14 +29,15 @@
 </head>
 
 <body>
-  <virtual-scroller></virtual-scroller>
+  <virtual-content id=vc></virtual-content>
 
   <script type="module">
+    import '../src/virtual-content.mjs';
     import './contacts/contact-element.mjs';
     import { ContactDataSource } from './contacts/contact-data-source.mjs';
 
     const dataSource = new ContactDataSource();
-    const virtualScroller = document.querySelector('virtual-scroller');
+    const virtualScroller = document.getElementById('vc');
 
     const button = document.createElement('button');
     virtualScroller.appendChild(button);
