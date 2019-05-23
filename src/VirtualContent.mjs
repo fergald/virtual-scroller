@@ -579,7 +579,7 @@ export class VirtualContent extends HTMLElement {
     // may become incorrect.
     this.resizeObserver.unobserve(element);
     if (this.observed.has(element)) {
-      this.unobserve();
+      this.unobserve(element);
     }
     if (this.useIntersection) {
       delete this.intersection[element];
