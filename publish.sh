@@ -30,22 +30,24 @@ git checkout gh-pages
 sha=$(git show --oneline --no-abbrev -s "$revision" | cut -f 1 -d " ")
 dest=versions/"$sha"
 git clone -s -n . "$dest"
-cd "$dest"
-git checkout "$sha"
-echo Deleting `pwd`/.git
-read f
-rm -rf .git
-git add .
-git commit -a -m"Add gh-pages revision $sha"
+(
+    cd "$dest"
+    git checkout "$sha"
+    echo Deleting `pwd`/.git
+    read f
+    rm -rf .git
+    git add .
+    git commit -a -m"Add gh-pages revision $sha"
 
-if [ "$sha" = "$revision" ]; then
-    exit
-fi
+    if [ "$sha" = "$revision" ]; then
+        exit
+    fi
 
-cd ..
-ln -sfT "$sha" "$revision"
-git add "$revision"
-git commit -a -m"Update $revision->$sha"
+    cd ..
+    ln -sfT "$sha" "$revision"
+    git add "$revision"
+    git commit -a -m"Update $revision->$sha"
+)
 git push
 
 git checkout -
