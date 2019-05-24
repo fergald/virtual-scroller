@@ -160,6 +160,8 @@ export class VirtualContent extends HTMLElement {
   useIntersection = false;
   useForcedLayout = false;
 
+  debug = DEBUG;
+
   constructor() {
     super();
 
@@ -205,6 +207,10 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
+  setDebug(debug) {
+    this.debug = debug;
+  }
+
   setUseLocking(useLocking) {
     if (useLocking && !this.displayLock) {
       console.log("Disabling locking");
@@ -237,7 +243,7 @@ export class VirtualContent extends HTMLElement {
 
   sync() {
     let start = performance.now();
-    if (this.DEBUG) console.log("sync");
+    if (this.debug) console.log("sync");
 
     if (this.childNodes.length == 0) {
       return;
@@ -261,7 +267,7 @@ export class VirtualContent extends HTMLElement {
       let newRevealedBounds;
       if (this.useForcedLayouts) {
         newRevealedBounds = this.revealBounds(windowBounds);
-        if (this.DEBUG) console.log("newRevealedBounds", newRevealedBounds);
+        if (this.debug) console.log("newRevealedBounds", newRevealedBounds);
         newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
         this.measureBounds(newRevealedBounds);
       } else {
@@ -271,16 +277,16 @@ export class VirtualContent extends HTMLElement {
         newRevealedBounds = this.revealHopefulBounds(windowBounds);
       }
       let newRevealed = newRevealedBounds.elementSet();
-      if (this.DEBUG) console.log("newRevealedBounds after trim", newRevealedBounds);
+      if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
       let toHide = this.setDifference(this.revealed, newRevealed);
-      if (this.DEBUG) console.log("toHide", toHide);
+      if (this.debug) console.log("toHide", toHide);
       toHide.forEach(e => this.requestHide(e));
       // Mutates newRevealed.
       this.updateIntersectionObservers(newRevealedBounds, newRevealed);
 
       if (!this.useForcedLayouts) {
         let toReveal = this.setDifference(newRevealed, this.revealed);
-        if (this.DEBUG) console.log("toHide", toHide);
+        if (this.debug) console.log("toHide", toHide);
         toReveal.forEach(e => this.requestReveal(e));
         // If we are being lazy and not forcing layouts, we need to
         // check again in the next frame to see if we have more work
@@ -291,10 +297,10 @@ export class VirtualContent extends HTMLElement {
       }
     }
 
-    if (this.DEBUG) console.log("revealCount", this.revealCount());
+    if (this.debug) console.log("revealCount", this.revealCount());
 
     let end = performance.now();
-    if (this.DEBUG) console.log("sync took: " + (end - start));
+    if (this.debug) console.log("sync took: " + (end - start));
   }
 
   logInfo() {
@@ -354,7 +360,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealCount() {
-    if (DEBUG) {
+    if (this.debug) {
       let count = 0;
       for (const element of this.children) {
         if (this.getRevealed(element)) {
@@ -436,7 +442,7 @@ export class VirtualContent extends HTMLElement {
 
   ensureValidSize(element) {
     if (this.sizeValid.get(element)) {
-      if (DEBUG) {
+      if (this.debug) {
         if (this.sizes.has(element) === undefined) {
           throw "No size for valid size: " + element;
         }
@@ -524,7 +530,7 @@ export class VirtualContent extends HTMLElement {
 
   requestHide(element) {
     if (!this.getRevealed(element)) {
-      if (DEBUG) {
+      if (this.debug) {
         throw "is already hidden: " + element;
       }
     } else {
