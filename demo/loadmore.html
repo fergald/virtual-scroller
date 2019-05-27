@@ -38,6 +38,7 @@
 
     const dataSource = new ContactDataSource();
     const virtualScroller = document.getElementById('vc');
+    virtualScroller.setFromUrl(window.location.href);
 
     const button = document.createElement('button');
     virtualScroller.appendChild(button);

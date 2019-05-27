@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 const BUFFER = .2;
 
 let LOCKING_DEFAULT = true;
@@ -205,6 +205,24 @@ export class VirtualContent extends HTMLElement {
     };
 
     this.scheduleUpdate();
+  }
+
+  setFromUrl(urlString) {
+    let url = new URL(urlString);
+    let params = url.searchParams;
+    let setters = new Map([
+      ["debug", this.setDebug],
+      ["useLocking", this.setUseLocking],
+      ["useIntersection", this.setUseIntersection],
+      ["useForcedLayouts", this.setUseForcedLayouts],
+      ["useScrollEvents", this.setUseScrollEvents],
+    ]);
+
+    for (let key of params.keys()) {
+      if (setters.has(key)) {
+        setters.get(key).bind(this)(params.get(key));
+      }
+    }
   }
 
   setDebug(debug) {
