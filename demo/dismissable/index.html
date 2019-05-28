@@ -45,7 +45,7 @@
     import './dismissable-item.mjs';
 
     const virtualScroller = document.getElementById('vc');
-    virtualScroller.setUseForcedLayouts(true);
+    virtualScroller.setFromUrl(window.location.href);
 
     fetch('../contacts/contacts.json').then((resp) => resp.json()).then((contacts) => {
       let i = 0;
