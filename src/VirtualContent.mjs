@@ -158,7 +158,8 @@ export class VirtualContent extends HTMLElement {
   nearestScrollingAncestor;
 
   useIntersection = false;
-  useForcedLayout = false;
+
+  useForcedLayouts = false;
 
   debug = DEBUG;
 
