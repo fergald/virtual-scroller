@@ -299,8 +299,6 @@ export class VirtualContent extends HTMLElement {
       let toHide = this.setDifference(this.revealed, newRevealed);
       if (this.debug) console.log("toHide", toHide);
       toHide.forEach(e => this.requestHide(e));
-      // Mutates newRevealed.
-      this.updateIntersectionObservers(newRevealedBounds, newRevealed);
 
       if (!this.useForcedLayouts) {
         let toReveal = this.setDifference(newRevealed, this.revealed);
@@ -313,6 +311,9 @@ export class VirtualContent extends HTMLElement {
           this.scheduleUpdate();
         }
       }
+
+      // Mutates newRevealed, so we do this last.
+      this.updateIntersectionObservers(newRevealedBounds, newRevealed);
     }
 
     if (this.debug) console.log("revealCount", this.revealCount());
