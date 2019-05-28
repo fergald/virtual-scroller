@@ -304,7 +304,7 @@ export class VirtualContent extends HTMLElement {
 
       if (!this.useForcedLayouts) {
         let toReveal = this.setDifference(newRevealed, this.revealed);
-        if (this.debug) console.log("toHide", toHide);
+        if (this.debug) console.log("toReveal", toReveal);
         toReveal.forEach(e => this.requestReveal(e));
         // If we are being lazy and not forcing layouts, we need to
         // check again in the next frame to see if we have more work
