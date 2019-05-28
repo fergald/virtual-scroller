@@ -160,6 +160,11 @@ export class VirtualContent extends HTMLElement {
   useIntersection = false;
 
   useForcedLayouts = false;
+  // If useForcedLayout=false this tracks how many consecutive frames
+  // of layout we have done (this number can be high because we had to
+  // do a lot of relayout or just because the page or scroll-position
+  // was changing a lot).
+  framesOfSync = 0;
 
   debug = DEBUG;
 
@@ -310,6 +315,13 @@ export class VirtualContent extends HTMLElement {
         // to do.
         if (toHide.size > 0 || toReveal.size > 0) {
           this.scheduleUpdate();
+          // We had to make an adjustment, so count this frame.
+          this.framesOfSync++;
+        } else {
+          // We're finished making adjustments, so log the final
+          // count.
+          console.log("framesOfSync", this.framesOfSync);
+          this.framesOfSync = 0;
         }
       }
 
