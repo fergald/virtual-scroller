@@ -5,14 +5,13 @@
 
 <script type="module">
   import '../../src/virtual-content.mjs';
+  import * as Words from '../util/Words.mjs';
+  import * as Locker from '../util/Locker.mjs'
 
   let vc;
 
   function populate() {
-    let words = "";
-    for (let i = 0; i < wordCount.value; i++) {
-      words += " word";
-    }
+    let words = Words.words(wordCount.value);
 
     vc = document.createElement("virtual-content");
     vc.setUseLocking(useLocking.checked);
@@ -21,11 +20,8 @@
     vc.setUseForcedLayouts(useForcedLayouts.checked, contentDiv);
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
-    for (let i = 0; i < elementCount.value; i++) {
-      let e = document.createElement("div");
-      e.innerText = i + words;
-      e.id = "p" + i;
-      vc.appendChild(e);
+    for (const div of Words.divs(elementCount.value, words)) {
+      vc.appendChild(div);
     }
     goButton.disabled = true;
   }
