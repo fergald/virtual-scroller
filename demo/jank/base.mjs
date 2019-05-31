@@ -12,8 +12,18 @@ export function populate(vc) {
   let wordCount = parseInt(params.get("words")) || 50;
   let divCount = parseInt(params.get("divs")) || 10000;
   let words = Words.words(wordCount);
+  let i = 0;
+  // Will be NaN if not supplied and i>=lockFrom will never be true.
+  let lockFrom = parseInt(params.get("lockFrom"));
   for (const div of Words.divs(divCount, words)) {
     vc.appendChild(div);
+    if (i >= lockFrom) {
+      div.displayLock.acquire({
+        timeout: Infinity,
+        activatable: true,
+        size: [10, 10],
+      }).then(null, reason => {console.log("Rejected: ", reason.message)});
+    }
   }
 }
 
