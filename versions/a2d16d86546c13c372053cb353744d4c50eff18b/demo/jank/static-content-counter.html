@@ -1,0 +1,37 @@
+<style>
+  #vc > div { contain: style layout };
+</style>
+<pre id=statusDiv></pre>
+<div id=counterDiv style="height: 400px; width: 400px">
+</div>
+<div id=contentDiv style="height: 100px; width: 100px">
+  <div id=vc></div>
+</div>
+
+<script type="module">
+  import * as Base from './base.mjs';
+
+  Base.populate(document.getElementById("vc"));
+  let params = (new URL(document.location)).searchParams;
+  if (parseInt(params.get("overflow"))) {
+    contentDiv.style.overflow = "scroll";
+    statusDiv.innerText += "scroll\n";
+  }
+  if (parseInt(params.get("strict"))) {
+    contentDiv.style.contain = "strict";
+    counterDiv.style.contain = "strict";
+    statusDiv.innerText += "strict\n";
+  }
+
+  let i = 0;
+  function update() {
+    counterDiv.innerText = i++;
+    schedule();
+  }
+  function schedule() {
+    window.requestAnimationFrame(
+      update
+    );
+  }
+  schedule();
+</script>
