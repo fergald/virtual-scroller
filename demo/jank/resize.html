@@ -25,6 +25,9 @@
   let elementType = parseInt(params.get("useVC")) ? "virtual-content" : "div";
   let vc = document.createElement(elementType);
   vc.id = "vc";
+  if (vc.setFromUrl) {
+    vc.setFromUrl(document.location);
+  }
   contentDiv.appendChild(vc);
   Base.populate(vc);
 </script>
