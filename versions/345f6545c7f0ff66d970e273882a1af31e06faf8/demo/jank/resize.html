@@ -1,0 +1,33 @@
+<style>
+  #contentDiv {
+      animation-direction: alternate;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      animation-name: resize;
+  }
+  @keyframes resize {
+      0% { width: 400px; }
+      100% { width: 600px; }
+  }
+</style>
+
+<raf-spinner></raf-spinner>
+<div id=contentDiv style="overflow: scroll; height: 400px; ">
+</div>
+
+<script type="module">
+  import '../../src/virtual-content.mjs';
+  import '../util/raf-spinner.mjs';
+  import * as Base from './base.mjs';
+
+  let params = (new URL(document.location)).searchParams;
+  let elementType = parseInt(params.get("useVC")) ? "virtual-content" : "div";
+  let vc = document.createElement(elementType);
+  vc.id = "vc";
+  if (vc.setFromUrl) {
+    vc.setFromUrl(document.location);
+  }
+  contentDiv.appendChild(vc);
+  Base.populate(vc);
+</script>
