@@ -1,31 +1,40 @@
 const TEMPLATE = `
 <style>
+  .fps { width: 25%; float: left; text-align: right }
 </style>
 
-<svg id="svg">
-  <circle cx="0" cy="0" id="circle"/>
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <path stroke-width="1" />
-  <line x1="0" y1="0" stroke="black" id="line"/>
-</svg>
+<div style="display:inline-block">
+  <svg id="svg">
+    <circle cx="0" cy="0" id="circle"/>
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <path stroke-width="1" />
+    <line x1="0" y1="0" stroke="black" id="line"/>
+  </svg>
+  <div id=fps>
+    <div id=fps1 class=fps>0</div>
+    <div id=fps2 class=fps>0</div>
+    <div id=fps3 class=fps>0</div>
+    <div id=fps4 class=fps>0</div>
+  </div>
+</div>
 `;
 
 export class RafSpinner extends HTMLElement {
@@ -35,6 +44,7 @@ export class RafSpinner extends HTMLElement {
   radius = 145;
   lightness = 50;
   spinner;
+  counter = 0;
 
   constructor() {
     super();
@@ -60,6 +70,7 @@ export class RafSpinner extends HTMLElement {
     let background = this.spinner.getElementById("circle");
     background.setAttribute("r", this.radius);
     background.setAttribute("fill", fill);
+    this.fps = shadowRoot.getElementById("fps");
     this.scheduleUpdate();
   }
 
@@ -121,6 +132,10 @@ export class RafSpinner extends HTMLElement {
     this.line.setAttribute("y2", p[1]);
   }
 
+  updateFps(delta) {
+    this.fps.children[this.counter++ % 4].innerText = (1000/delta).toFixed(2);
+  }
+
   scheduleUpdate() {
     requestAnimationFrame((ts) => {this.update(ts)});
   }
@@ -129,9 +144,11 @@ export class RafSpinner extends HTMLElement {
     if (!this.last_time)
       this.last_time = timestamp;
     // Update the data, and redraw.
-    this.updateData(timestamp - this.last_time);
+    let timeDiff = timestamp - this.last_time;
+    this.updateData(timeDiff);
     this.redrawSweep();
     this.last_time = timestamp;
+    this.updateFps(timeDiff);
     this.scheduleUpdate();
   }
 }
