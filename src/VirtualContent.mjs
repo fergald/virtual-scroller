@@ -1,7 +1,7 @@
 const DEBUG = false;
 const BUFFER = .2;
 
-let LOCKING_DEFAULT = true;
+let LOCKING_DEFAULT = 1;
 let COLOUR_DEFAULT = true;
 
 const DEFAULT_HEIGHT_ESTIMATE = 100;
@@ -213,55 +213,70 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
-  setFromUrl(urlString) {
+  setFromUrl(urlString, status) {
     let url = new URL(urlString);
     let params = url.searchParams;
     let setters = new Map([
-      ["debug", this.setDebug],
-      ["useLocking", this.setUseLocking],
-      ["useIntersection", this.setUseIntersection],
-      ["useForcedLayouts", this.setUseForcedLayouts],
-      ["useScrollEvents", this.setUseScrollEvents],
+      ["debug", [this.setDebug, "Emit lots of debug info"]],
+      ["useLocking", [this.setUseLocking, "Whether to lock elements or just change their color"]],
+      ["useIntersection", [this.setUseIntersection, "Use intersection observers on all elements"]],
+      ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
+//      ["useScrollEvents", [this.setUseScrollEvents, ""]],
     ]);
 
-    for (let key of params.keys()) {
+    for (let key of setters.keys()) {
+      let value;
+      let help;
       if (setters.has(key)) {
-        setters.get(key).bind(this)(params.get(key));
+        let method;
+        [method, help] = setters.get(key);
+        value = method.bind(this)(params.get(key));
+      }
+      if (status) {
+        let placeholder = status.getRootNode().getElementById(key + "-placeholder");
+        if (!placeholder) {
+          let div = document.createElement("div");
+          div.innerHTML = `<code>${key}=<span id=${key}-placeholder>nnn</span></code> : ${help}`;
+          status.appendChild(div);
+          placeholder = status.getRootNode().getElementById(key + "-placeholder");
+        }
+        placeholder.innerText = value;
       }
     }
   }
 
   setDebug(debug) {
-    this.debug = debug;
+    return this.debug = parseInt(debug) || 0;
   }
 
   setUseLocking(useLocking) {
+    useLocking = parseInt(useLocking) || LOCKING_DEFAULT;
     if (useLocking && !this.displayLock) {
       console.log("Disabling locking");
-      this.useLocking = false;
+      return this.useLocking = false;
     } else {
-      this.useLocking = useLocking;
+      return this.useLocking = useLocking;
     }
   }
 
   setUseIntersection(useIntersection) {
-    this.useIntersection = useIntersection;
+    return this.useIntersection = parseInt(useIntersection) || 0;
   }
 
   setUseForcedLayouts(useForcedLayouts) {
-    this.useForcedLayouts = useForcedLayouts;
+    return this.useForcedLayouts = parseInt(useForcedLayouts) || 0;
   }
 
   setUseScrollEvents(useScrollEvents, scroller) {
     // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
     if (!scroller) {
-      return;
-    }
-    if (useScrollEvents) {
+      return 0;
+    } else if (useScrollEvents) {
       scroller.addEventListener('scroll', this.scrollEventListener);
-    }
-    if (!useScrollEvents) {
+      return 1;
+    } else {
       scroller.removeEventListener('scroll', this.scrollEventListener);
+      return 0;
     }
   }
 

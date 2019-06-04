@@ -22,7 +22,7 @@
   let vc = document.createElement(elementType);
   vc.id = "vc";
   if (vc.setFromUrl) {
-    vc.setFromUrl(document.location);
+    vc.setFromUrl(document.location, document.getElementById("statusDiv"));
   }
   contentDiv.appendChild(vc);
   Base.populate(vc);
