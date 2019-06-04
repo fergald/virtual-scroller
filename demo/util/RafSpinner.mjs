@@ -29,10 +29,10 @@ const TEMPLATE = `
     <line x1="0" y1="0" stroke="black" id="line"/>
   </svg>
   <div id=fps>
-    <div id=fps1 class=fps>0</div>
-    <div id=fps2 class=fps>0</div>
-    <div id=fps3 class=fps>0</div>
-    <div id=fps4 class=fps>0</div>
+    <div class=fps><span class=place>0</span> FPS</div>
+    <div class=fps><span class=place>0</span> FPS</div>
+    <div class=fps><span class=place>0</span> FPS</div>
+    <div class=fps><span class=place>0</span> FPS</div>
   </div>
 </div>
 `;
@@ -70,7 +70,7 @@ export class RafSpinner extends HTMLElement {
     let background = this.spinner.getElementById("circle");
     background.setAttribute("r", this.radius);
     background.setAttribute("fill", fill);
-    this.fps = shadowRoot.getElementById("fps");
+    this.fps = shadowRoot.getElementById("fps").getElementsByClassName("place");
     this.scheduleUpdate();
   }
 
@@ -138,7 +138,7 @@ export class RafSpinner extends HTMLElement {
   }
 
   updateFps(delta) {
-    this.fps.children[this.counter++ % 4].innerText = (1000/delta).toFixed(2);
+    this.fps[this.counter++ % this.fps.length].innerText = (1000/delta).toFixed(2);
   }
 
   scheduleUpdate() {
