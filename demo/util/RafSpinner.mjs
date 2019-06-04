@@ -82,14 +82,19 @@ export class RafSpinner extends HTMLElement {
     let delta_deg = this.deg_per_sec * delta / 1000;
     if (delta_deg >= 90)
       delta_deg = 90;
-    // <= 17 ms is green
+    // <=  17ms is green
+    // >   17ms is orange
     // >= 517ms is red
-    // Cap at "100" hue".
-    let color = 2 * (delta - 17) / 10;
-    if (color < 0)
-      color = 0
-    else if (color > 100)
+    let color;
+    if (delta <= 17) {
+      color = 0;
+    } else if (delta >= 500) {
       color = 100;
+    } else {
+      // linearly map 17-500 to 40-100
+      const base = 40;
+      color = base + (delta - 17) / (500-17) * (100 - base);
+    }
     // Hue 0 is actually red, so just invert the color.
     color = 100 - color;
     // Save off the values.
