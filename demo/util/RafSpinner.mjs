@@ -1,6 +1,6 @@
 const TEMPLATE = `
 <style>
-  .fps { width: 25%; float: left; text-align: right }
+  .fps { width: 23%; float: left; text-align: right; padding-right: 2% }
 </style>
 
 <div style="display:inline-block">
