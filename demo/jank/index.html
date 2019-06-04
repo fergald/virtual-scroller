@@ -1,16 +1,21 @@
+<style>
+  .terrible { background-color: #cc0202 }
+  .bad { background-color: #ff7900 }
+</style>
+
 <ul>
   <li><b>Resizing</b></li>
   <ul>
     <li>10K elements
       <ol>
-        <li><a href="resize.html?divs=10000&useVC=0">Without virtual-content (terrible)</a><br>
+        <li><a href="resize.html?divs=10000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
         <li><a href="resize.html?divs=10000&useVC=1">With virtual-content (not terrible)</a><br>
       </ol>
     </li>
     <li>100K elements
       <ol>
-        <li><a href="resize.html?divs=100000&useVC=0">Without virtual-content (terrible)</a><br>
-        <li><a href="resize.html?divs=100000&useVC=1">With virtual-content (terrible)</a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+        <li><a href="resize.html?divs=100000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
+        <li><a href="resize.html?divs=100000&useVC=1">With virtual-content <span class="terrible">(terrible)</span></a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
       </ol>
     </li>
   </ul>
@@ -23,10 +28,10 @@
       orthogonal to virtual content
       etc. <a href="https://crbug.com/969683">https://crbug.com/969683</a>
       <ul>
-        <li><a href="static-content-counter.html?divs=100000&strict=1">With strict on both (long layout, layer tree)</a><br>
-        <li><a href="static-content-counter.html?divs=100000">Without strict (very long layout, layer tree and paint)</a><br>
-        <li><a href="static-content-counter.html?divs=100000&overflow=1&strict=1">Scroller with strict on both (long layout, layer tree)</a><br>
-        <li><a href="static-content-counter.html?divs=100000&overflow=1">Scroller without strict (very long layout, layer tree and paint)</a><br>
+        <li><a href="static-content-counter.html?divs=100000&strict=1">With strict on both <span class="terrible">(long layout, layer tree)</a><br>
+        <li><a href="static-content-counter.html?divs=100000">Without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
+        <li><a href="static-content-counter.html?divs=100000&overflow=1&strict=1">Scroller with strict on both <span class="terrible">(long layout, layer tree)</a><br>
+        <li><a href="static-content-counter.html?divs=100000&overflow=1">Scroller without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
       </ul>
     </li>
   </ul>
