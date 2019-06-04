@@ -1,16 +1,24 @@
-<div style="float: left">
-  <pre>scrollBy=nnn</pre> : how many pixels to scroll by each time
+<div style="width: 100%; display: flex">
+  <raf-spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+    <div><code>useVC=<span id=useVC-placeholder>nnn</span></code> : use virtual-content or just a DIV</div>
+    <div><code>scrollBy=<span id=scrollBy-placeholder>nnn</span></code> : how many pixels to scroll by each time</div>
+    <div><code>nFrames=<span id=nFrames-placeholder>nnn</span></code> : adjust the scroll every nnn frames</div>
+  </div>
 </div>
-<raf-spinner></raf-spinner>
-<div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
 
 <script type="module">
   import '../../src/virtual-content.mjs';
   import '../util/raf-spinner.mjs';
+  import * as Params from '../util/Params.mjs';
   import * as Base from './base.mjs';
 
-  let params = (new URL(document.location)).searchParams;
-  let elementType = parseInt(params.get("useVC")) ? "virtual-content" : "div";
+  let useVC = Params.get("useVC", (p) => {return parseInt(p) || 0});
+  let elementType = useVC ? "virtual-content" : "div";
   let vc = document.createElement(elementType);
   vc.id = "vc";
   if (vc.setFromUrl) {
@@ -19,8 +27,8 @@
   contentDiv.appendChild(vc);
   Base.populate(vc);
 
-  let scrollBy = parseInt(params.get("scrollBy")) || 50;
-  let nFrames = parseInt(params.get("nFrames")) || 1;
+  let scrollBy = Params.get("scrollBy", (p) => {return parseInt(p) || 50});
+  let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1});
   let i = 0;
   function update() {
     if ((i % nFrames) == 0) {
