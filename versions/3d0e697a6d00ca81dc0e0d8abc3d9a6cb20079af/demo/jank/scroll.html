@@ -1,0 +1,36 @@
+<raf-spinner></raf-spinner>
+<div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+
+<script type="module">
+  import '../../src/virtual-content.mjs';
+  import '../util/raf-spinner.mjs';
+  import * as Base from './base.mjs';
+
+  let params = (new URL(document.location)).searchParams;
+  let elementType = parseInt(params.get("useVC")) ? "virtual-content" : "div";
+  let vc = document.createElement(elementType);
+  vc.id = "vc";
+  if (vc.setFromUrl) {
+    vc.setFromUrl(document.location);
+  }
+  contentDiv.appendChild(vc);
+  Base.populate(vc);
+
+  let scrollBy = parseInt(params.get("scrollBy")) || 50;
+  let nFrames = parseInt(params.get("nFrames")) || 1;
+  let i = 0;
+  function update() {
+    if ((i % nFrames) == 0) {
+      // Loops from  0 .. scrollHeight .. 0
+      contentDiv.scrollTop = contentDiv.scrollHeight - Math.abs(contentDiv.scrollHeight - ((i * scrollBy) % (2*contentDiv.scrollHeight)));
+    }
+    schedule();
+    i++;
+  }
+  function schedule() {
+    window.requestAnimationFrame(
+      update
+    );
+  }
+  schedule();
+</script>
