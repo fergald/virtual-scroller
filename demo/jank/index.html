@@ -56,7 +56,11 @@
       and assign the newly visible elements to it,
       unlocking all of it's current ancestors
       (and relocking it's previous ancestors).
-      <b>This is not scroller</b>, it's a proof-of-concept for benchmarking.
+      Because this assigns all of the visible elements to a single slot,
+      it should avoid the problems of the previous tree approach,
+      e.g. breaking margin-collapsing.
+      However we can no longer rely on the layout engine to size the empty space above/below the visible content.
+    <p><b>This is not scroller</b>, it's a proof-of-concept for benchmarking.
       It cannot handle updates
       and does not manage spacer divs above/below the unlocked content.
       It simply cycles through groups of elements,
