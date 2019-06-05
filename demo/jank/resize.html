@@ -29,13 +29,11 @@
   import * as Params from '../util/Params.mjs';
   import * as Base from './base.mjs';
 
-  let useVC = Params.get("useVC", (p) => {return parseInt(p) || 0});
+  let statusDiv = document.getElementById("statusDiv")
+  let useVC = Params.get("useVC", (p) => {return parseInt(p) || 0}, statusDiv);
   let elementType = useVC ? "virtual-content" : "div";
   let vc = document.createElement(elementType);
   vc.id = "vc";
-  if (vc.setFromUrl) {
-    vc.setFromUrl(document.location, document.getElementById("statusDiv"));
-  }
   contentDiv.appendChild(vc);
-  Base.populate(vc);
+  Base.populate(vc, statusDiv);
 </script>

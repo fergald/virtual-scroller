@@ -1,20 +1,20 @@
 import * as Words from '../util/Words.mjs';
 import * as Locker from '../util/Locker.mjs'
+import * as Params from '../util/Params.mjs'
 
-export function populate(vc) {
+export function populate(vc, statusDiv) {
   if (vc.setFromUrl) {
-    vc.setFromUrl(document.location);
+    vc.setFromUrl(document.location, statusDiv);
   } else {
     console.warn("Not calling vs.setFromUrl on", vc);
   }
 
-  let params = (new URL(document.location)).searchParams;
-  let wordCount = parseInt(params.get("words")) || 50;
-  let divCount = parseInt(params.get("divs")) || 10000;
+  let wordCount = Params.get("words", (p) => { return parseInt(p) || 50 }, statusDiv);
+  let divCount = Params.get("divs", (p) => { return parseInt(p) || 10000 }, statusDiv);
   let words = Words.words(wordCount);
   let i = 0;
   // Will be NaN if not supplied and i>=lockFrom will never be true.
-  let lockFrom = parseInt(params.get("lockFrom"));
+  let lockFrom = Params.get("lockFrom", parseInt, statusDiv);
   for (const div of Words.divs(divCount, words)) {
     vc.appendChild(div);
     if (i >= lockFrom) {
