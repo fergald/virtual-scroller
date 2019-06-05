@@ -7,40 +7,40 @@
   <li><b>Resizing</b></li>
   <ul>
     <li>10K elements
-      <ol>
+      <ul>
         <li><a href="resize.html?divs=10000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
         <li><a href="resize.html?divs=10000&useVC=1">With virtual-content <span class="bad">(not terrible)</span></a><br>
-      </ol>
+      </ul>
     </li>
     <li>100K elements
-      <ol>
+      <ul>
         <li><a href="resize.html?divs=100000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
         <li><a href="resize.html?divs=100000&useVC=1">With virtual-content <span class="terrible">(terrible)</span></a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
-      </ol>
+      </ul>
     </li>
   </ul>
   <li><b>Scrolling</b></li>
   <ul>
     <li>10K elements
-      <ol>
+      <ul>
         <li>Scroll by 50px
-          <ol>
+          <ul>
             <li><a href="scroll.html?divs=10000&useVC=0">Without virtual-content (smooth)</a><br>
             <li><a href="scroll.html?divs=10000&useVC=1">With virtual-content <span class="bad">(not terrible but 50ms/frame)</span></a><br>
-          </ol>
+          </ul>
         <li>Scroll by several pages
-          <ol>
+          <ul>
             <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=0">Without virtual-content (smooth)</a><br>
             <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=1">With virtual-content (<span class="terrible">completely blank!</span>)</a><br>
             <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=1&useForcedLayouts=1">With virtual-content and forced-layouts (<span class="terrible">not blank but low FPS</span>)</a><br>
-          </ol>
-      </ol>
+          </ul>
+      </ul>
     </li>
     <li>100K elements
-      <ol>
+      <ul>
         <li><a href="scroll.html?divs=100000&useVC=0">Without virtual-content (smooth)</a><br>
         <li><a href="scroll.html?divs=100000&useVC=1">With virtual-content <span class="terrible">(terrible)</span></a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
-      </ol>
+      </ul>
     </li>
   </ul>
   <li><b>Existing surprising jank</b></li>
