@@ -43,6 +43,39 @@
       </ul>
     </li>
   </ul>
+  <li><b>Binary slot tree prototype</b>
+    <p>This is a new approach where a tree of slots is maintained.
+      The elements are assigned to locked slots in this tree,
+      except for the visible elements.
+      These are temporarily assigned to the special visible-slot.
+      This slot is inserted into the tree adjacent to a locked slot
+      and all of its ancestors are unlocked.
+      When we want to make a different set of elements visible,
+      we reassign all the elements back to their "natural" locked slots,
+      move the visible slot to the right place in the tree
+      and assign the newly visible elements to it,
+      unlocking all of it's current ancestors
+      (and relocking it's previous ancestors).
+      <b>This is not scroller</b>, it's a proof-of-concept for benchmarking.
+      It cannot handle updates
+      and does not manage spacer divs above/below the unlocked content.
+      It simply cycles through groups of elements,
+      revealing chunks of 10 as fast as frame rate allows.</p>
+
+    <p>Particularly interesting are 3 things that seem unexpectedly slow.
+      They all seem like O(n) effects that we should fix.
+      <ul>
+        <li>insertBefore (used to move the visible slot from one location to another)
+          seems very expensive given that we are just moving it around a tree
+        <li>slot.assignedNodes() seems very expensive given that it returns 10 elements in these demos.
+          It appears to go as O(n) in the number of children of element,
+          not the number of nodes assigned to this slot.
+        <li>Recalc style seems slow, 15ms for 43 elements (in the 100K case).
+          Something is over-invalidating?
+          Or maybe we can tweak the styles of the custom elements.
+      </ul>
+    </p>
+  </li>
   <li><b>Existing surprising jank</b></li>
   <ul>
     <li>100K elements under a counter - the counter is in a fixed-size

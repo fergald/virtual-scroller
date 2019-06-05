@@ -1,9 +1,13 @@
 export class Locker {
+  constructor(size) {
+    this.size = size || [10, 50];
+  }
+
   lock(element, andThen) {
     return element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
-      size: [10, 50],
+      size: this.size,
     }).then(andThen, reason => {console.log("Rejected: ", reason.message)});
   }
 
@@ -15,3 +19,5 @@ export class Locker {
     return element.displayLock.commit().then(andThen, reason => {console.log("Rejected: ", reason)});
   }
 }
+
+export const locker = new Locker();
