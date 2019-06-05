@@ -56,3 +56,20 @@ function onChangeUseForcedLayouts() {
   }
 }
 window.onChangeUseForcedLayouts = onChangeUseForcedLayouts;
+
+export function everyNFrames(n, callback) {
+  let i = 0;
+  function update() {
+    if ((i % n) == 0) {
+      callback(i);
+    }
+    schedule();
+    i++;
+  }
+  function schedule() {
+    window.requestAnimationFrame(
+      update
+    );
+  }
+  schedule();
+}

@@ -27,19 +27,8 @@
 
   let scrollBy = Params.get("scrollBy", (p) => {return parseInt(p) || 50}, statusDiv);
   let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
-  let i = 0;
-  function update() {
-    if ((i % nFrames) == 0) {
-      // Loops from  0 .. scrollHeight .. 0
-      contentDiv.scrollTop = contentDiv.scrollHeight - Math.abs(contentDiv.scrollHeight - ((i * scrollBy) % (2*contentDiv.scrollHeight)));
-    }
-    schedule();
-    i++;
-  }
-  function schedule() {
-    window.requestAnimationFrame(
-      update
-    );
-  }
-  schedule();
+  Base.everyNFrames(nFrames, (i) => {
+    // Loops from  0 .. scrollHeight .. 0
+    contentDiv.scrollTop = contentDiv.scrollHeight - Math.abs(contentDiv.scrollHeight - ((i * scrollBy) % (2*contentDiv.scrollHeight)));
+  });
 </script>
