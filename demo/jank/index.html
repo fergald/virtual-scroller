@@ -59,8 +59,8 @@
       Because this assigns all of the visible elements to a single slot,
       it should avoid the problems of the previous tree approach,
       e.g. breaking margin-collapsing.
-      However we can no longer rely on the layout engine to size the empty space above/below the visible content.
-    <p><b>This is not scroller</b>, it's a proof-of-concept for benchmarking.
+      However we can no longer rely on the layout engine to size the empty space above/below the visible content.</p>
+    <p><b>This is not a scroller</b>, it's a proof-of-concept for benchmarking.
       It cannot handle updates
       and does not manage spacer divs above/below the unlocked content.
       It simply cycles through groups of elements,
@@ -79,6 +79,18 @@
           Or maybe we can tweak the styles of the custom elements.
       </ul>
     </p>
+    <ul>
+      <li>10K elements
+        <ul>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Link</a> (60 FPS)<br>
+        </ul>
+      </li>
+      <li>100K elements
+        <ul>
+          <li><a href="binary-tree-slots.html?divs=100000&useLT=1">Link</a> <span class="terrible">(terrible)</span>5 FPS (insertNode=15ms, assignedNodes=30ms, recalc style=10ms and maybe a lot of <a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+        </ul>
+      </li>
+    </ul>
   </li>
   <li><b>Existing surprising jank</b></li>
   <ul>
