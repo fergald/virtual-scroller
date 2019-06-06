@@ -45,6 +45,7 @@ export class RafSpinner extends HTMLElement {
   lightness = 50;
   spinner;
   counter = 0;
+  paused = false;
 
   constructor() {
     super();
@@ -142,7 +143,20 @@ export class RafSpinner extends HTMLElement {
   }
 
   scheduleUpdate() {
-    requestAnimationFrame((ts) => {this.update(ts)});
+    if (!this.paused) {
+      requestAnimationFrame((ts) => {this.update(ts)});
+    }
+  }
+
+  pause() {
+    this.paused = true;
+  }
+
+  unpause() {
+    if (this.paused) {
+      this.paused = false;
+      this.scheduleUpdate();
+    }
   }
 
   update(timestamp) {
