@@ -55,8 +55,8 @@
 
     assignToIndex(i, elements) {
       let slot = this.slots[i];
-      slot.assignedNodes();
       this.assign(slot, elements);
+      return slot;
     }
   }
 
@@ -97,6 +97,7 @@
   window.togglePause = togglePause;
 
   function update(i) {
+    ss.slots[1].assignedNodes();
     if (pause) {
       return;
     }
