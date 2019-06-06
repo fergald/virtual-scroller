@@ -25,6 +25,11 @@ class LockingTree extends HTMLElement {
   revealed = new Set();
   childToSlot = new WeakMap();
 
+  // Ideally we would just use slot.assignedNodes but until
+  // https://crbug.com/968928 is fixed, this works around that.
+  slotToChildren = new WeakMap();
+  visibleNodes = [];
+
   root;
   visibleSlot;
 
@@ -51,11 +56,13 @@ class LockingTree extends HTMLElement {
     for (const child of this.children) {
       if (i % this.groupSize == 0) {
         slot = document.createElement("slot");
+        this.slotToChildren.set(slot, []);
         slots.push(slot);
         slot.name = slots.length;
       }
       this.childToSlot.set(child, slot);
       this.assign(slot, [child]);
+      this.slotToChildren.get(slot).push(child);
       i++;
     }
 
@@ -139,7 +146,7 @@ class LockingTree extends HTMLElement {
     this.applyToAncestors(this.visibleSlot, (e) => {Locker.locker.lock(e)});
     slot.parentElement.insertBefore(this.visibleSlot, slot);
     this.applyToAncestors(this.visibleSlot, (e) => {Locker.locker.unlock(e)});
-    this.makeElementsVisible(slot.assignedNodes());
+    this.makeElementsVisible(this.slotToChildren.get(slot));
   }
 
   applyToAncestors(slot, call) {
@@ -151,11 +158,12 @@ class LockingTree extends HTMLElement {
   }
 
   makeElementsVisible(elements) {
+    this.visibleNodes = elements;
     this.assign(this.visibleSlot, elements);
   }
 
   restoreVisibleElements() {
-    this.restoreElementsToNaturalSlot(this.visibleSlot.assignedNodes());
+    this.restoreElementsToNaturalSlot(this.visibleNodes);
   }
 
   // Assume all elements have the same natural slot. OK for demo.
