@@ -1,5 +1,5 @@
 <div style="width: 100%; display: flex">
-  <raf-spinner></raf-spinner>
+  <raf-spinner id=spinner></raf-spinner>
   <div id=statusDiv>
     <p>Parameters you can tweak in the URL (and their current settings).</p>
   </div>
@@ -17,6 +17,9 @@
   import * as LockingTree from './LockingTree.mjs';
 
   let statusDiv = document.getElementById("statusDiv")
+  if (Params.get("pauseSpinner", (p) => { return parseInt(p)}, statusDiv)) {
+    document.getElementById("spinner").pause();
+  }
   let useLT = Params.get("useLT", (p) => {return parseInt(p) || 0}, statusDiv);
   let elementType = useLT ? "locking-tree" : "div";
   let lt = document.createElement(elementType);
