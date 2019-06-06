@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<style>
+  virtual-content:not(:defined) { display: none }
+</style>
+
+<script type="module">
+  import '../../src/virtual-content.mjs';
+
+  let vc;
+
+  function populate() {
+    let words = "";
+    for (let i = 0; i < wordCount.value; i++) {
+      words += " word";
+    }
+
+    vc = document.createElement("virtual-content");
+    vc.setUseLocking(useLocking.checked);
+    vc.setUseIntersection(useIntersection.checked);
+    vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
+    vc.setUseForcedLayouts(useForcedLayouts.checked, contentDiv);
+    contentDiv.innerHTML = "";
+    contentDiv.append(vc);
+    for (let i = 0; i < elementCount.value; i++) {
+      let e = document.createElement("div");
+      e.innerText = i + words;
+      e.id = "p" + i;
+      vc.appendChild(e);
+    }
+    goButton.disabled = true;
+  }
+  window.populate = populate;
+
+  function jump() {
+    let elements = contentDiv.children[0].children;
+    elements[elements.length - 1].scrollIntoView();
+  }
+  window.jump = jump;
+
+  function resize() {
+    contentDiv.style.width = contentDiv.style.width == "200px" ? "" : "200px";
+  }
+  window.resize = resize;
+
+  function logInfo() {
+    vc.logInfo();
+  }
+  window.logInfo = logInfo;
+
+  function onChangeUseScrollEvents() {
+    if (vc) {
+      vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
+    }
+  }
+  window.onChangeUseScrollEvents = onChangeUseScrollEvents;
+
+  function onChangeUseForcedLayouts() {
+    if (vc) {
+      vc.setUseScrollEvents(useForcedLayouts.checked, contentDiv);
+    }
+  }
+  window.onChangeUseForcedLayouts = onChangeUseForcedLayouts;
+
+  function go() {
+    // Spend 2s in a CPU burning loop to try ensure that the CPU is
+    // running at full clock-speed and not in some low-power mode.
+    let start = performance.now();
+    while (true) {
+      if (performance.now() - start > 2000) {
+        break;
+      }
+    }
+    jump();
+  }
+  window.go = go;
+</script>
+<div>
+  Element Count: <input id=elementCount value=10000><br>
+  Word Count: <input id=wordCount value=100><br>
+  Use Display Locking: <input id=useLocking type=checkbox checked><br>
+  Use Intersection Observer (not binary search): <input id=useIntersection type=checkbox><br>
+  Use Scroll Events (live): <input id=useScrollEvents type=checkbox onchange="onChangeUseScrollEvents()"><br>
+  Use forced layouts: <input id=useForcedLayouts type=checkbox onchange="onChangeUseForcedLayouts()"><br>
+  <br>
+  <input type=button onClick="populate()" value="Populate" id=goButton>
+  <input type=button onClick="go()" value="Go" id=goButton>
+  <input type=button onClick="jump()" value="Jump" id=jumpButton>
+  <input type=button onClick="resize()" value="Resize" id=resizeButton>
+  <input type=button onClick="logInfo()" value="LogInfo" id=logInfoButton>
+</div>
+<div id=contentDiv style="overflow: scroll; height: 400px"></div>

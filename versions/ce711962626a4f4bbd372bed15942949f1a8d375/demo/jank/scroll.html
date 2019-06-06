@@ -1,0 +1,34 @@
+<div style="width: 100%; display: flex">
+  <raf-spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+    <div><code>useVC=<span id=useVC-placeholder>nnn</span></code> : use virtual-content or just a DIV</div>
+    <div><code>scrollBy=<span id=scrollBy-placeholder>nnn</span></code> : how many pixels to scroll by each time</div>
+    <div><code>nFrames=<span id=nFrames-placeholder>nnn</span></code> : adjust the scroll every nnn frames</div>
+  </div>
+</div>
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
+
+<script type="module">
+  import '../../src/virtual-content.mjs';
+  import '../util/raf-spinner.mjs';
+  import * as Params from '../util/Params.mjs';
+  import * as Base from './base.mjs';
+
+  let statusDiv = document.getElementById("statusDiv")
+  let useVC = Params.get("useVC", (p) => {return parseInt(p) || 0}, statusDiv);
+  let elementType = useVC ? "virtual-content" : "div";
+  let vc = document.createElement(elementType);
+  vc.id = "vc";
+  contentDiv.appendChild(vc);
+  Base.populate(vc, statusDiv);
+
+  let scrollBy = Params.get("scrollBy", (p) => {return parseInt(p) || 50}, statusDiv);
+  let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
+  Base.everyNFrames(nFrames, (i) => {
+    // Loops from  0 .. scrollHeight .. 0
+    contentDiv.scrollTop = contentDiv.scrollHeight - Math.abs(contentDiv.scrollHeight - ((i * scrollBy) % (2*contentDiv.scrollHeight)));
+  });
+</script>
