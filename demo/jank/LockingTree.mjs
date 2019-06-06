@@ -37,12 +37,10 @@ class LockingTree extends HTMLElement {
     this.root.id = "root";
     shadowRoot.appendChild(this.root);
     this.visibleSlot = document.createElement("slot");
-    console.log(this.visibleSlot);
     this.populate();
   }
 
   populate() {
-    console.log(this.visibleSlot);
     let elementCount = this.children.length;
 
     let slots = [];

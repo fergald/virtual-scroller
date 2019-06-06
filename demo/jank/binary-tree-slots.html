@@ -23,11 +23,8 @@
   lt.setAttribute("group-size", Params.get("groupSize", (p) => { return parseInt(p) || 10 }));
   lt.id = "lt";
   contentDiv.appendChild(lt);
-  console.log(lt.visibleSlot);
   Base.populate(lt, statusDiv);
-  console.log(lt.visibleSlot);
   lt.populate();
-  console.log(lt.visibleSlot);
 
   function getBCR(e) {
     let t = performance.now();
