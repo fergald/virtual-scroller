@@ -108,5 +108,12 @@
         <li><a href="static-content-counter.html?divs=100000&overflow=1">Scroller without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
       </ul>
     </li>
+    <li>100K elements 10K slots. 99990 elements not assigned to any
+      slot, 10 elements swapping between the first and second
+      slot. Style recalc takes 10ms for 10 affected elements.
+      <ul>
+        <li><a href="assigned-nodes-slow.html?divs=100000">100K elements</a>
+      </ul>
+    </li>
   </ul>
 </ul>
