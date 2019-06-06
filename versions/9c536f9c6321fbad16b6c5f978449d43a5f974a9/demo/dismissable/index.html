@@ -1,0 +1,63 @@
+<html>
+
+<head>
+  <title>Dismiss element</title>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <style>
+    body {
+      font-family: Roboto, Helvetica, sans-serif;
+      max-width: 600px;
+      margin: 0px auto;
+      display: flex;
+      flex-direction: column;
+      background: whitesmoke;
+      height: 100vh;
+    }
+
+    virtual-scroller {
+      user-select: none;
+      flex: 1;
+    }
+
+    contact-element {
+      background: white;
+      height: 80px;
+      padding: 0px 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <template id=itemTemplate>
+    <dismissable-item>
+      <contact-element></contact-element>
+    </dismissable-item>
+  </template>
+
+  <virtual-content id=vc width=400px>
+  </virtual-content>
+
+  <script type="module">
+    import '../../src/virtual-content.mjs';
+    import './../contacts/contact-element.mjs';
+    import './dismissable-item.mjs';
+
+    const virtualScroller = document.getElementById('vc');
+    virtualScroller.setFromUrl(window.location.href);
+
+    fetch('../contacts/contacts.json').then((resp) => resp.json()).then((contacts) => {
+      let i = 0;
+      for (const contact of contacts) {
+        let newItem = itemTemplate.content.cloneNode(true);
+        newItem.children[0].id = "di" + i;
+        newItem.children[0].children[0].contact = contact;
+        virtualScroller.appendChild(newItem);
+        i++;
+      }
+    });
+  </script>
+</body>
+
+</html>
