@@ -32,7 +32,6 @@ class LockingTree extends HTMLElement {
     super();
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
-    this.groupSize = this.getAttribute("group-size") || 10;
     this.root = document.createElement("div");
     this.root.id = "root";
     shadowRoot.appendChild(this.root);
@@ -41,6 +40,8 @@ class LockingTree extends HTMLElement {
   }
 
   populate() {
+    this.groupSize = parseInt(this.getAttribute("group-size")) || 10;
+    this.useISA = parseInt(this.getAttribute("use-isa"));
     let elementCount = this.children.length;
 
     let slots = [];
@@ -54,7 +55,7 @@ class LockingTree extends HTMLElement {
         slot.name = slots.length;
       }
       this.childToSlot.set(child, slot);
-      child.slot = slot.name;
+      this.assign(slot, [child]);
       i++;
     }
 
@@ -64,6 +65,16 @@ class LockingTree extends HTMLElement {
     this.tree = tree;
     if (tree) {
       this.root.appendChild(tree[0]);
+    }
+  }
+
+  assign(slot, elements) {
+    if (this.useISA) {
+      slot.assign(elements);
+    } else {
+      for (const e of elements) {
+        e.slot = slot.name;
+      }
     }
   }
 
@@ -140,19 +151,19 @@ class LockingTree extends HTMLElement {
   }
 
   makeElementsVisible(elements) {
-    for (const e of elements) {
-      e.slot = this.visibleSlot.name;
-    }
+    this.assign(this.visibleSlot, elements);
   }
 
   restoreVisibleElements() {
     this.restoreElementsToNaturalSlot(this.visibleSlot.assignedNodes());
   }
 
+  // Assume all elements have the same natural slot. OK for demo.
   restoreElementsToNaturalSlot(elements) {
-    for (const e of elements) {
-      e.slot = this.childToSlot.get(e).name;
+    if (elements.length == 0) {
+      return;
     }
+    this.assign(this.childToSlot.get(elements[0]), elements);
   }
 
   revealLeaf(leafs) {

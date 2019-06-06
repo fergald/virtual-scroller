@@ -21,6 +21,7 @@
   let elementType = useLT ? "locking-tree" : "div";
   let lt = document.createElement(elementType);
   lt.setAttribute("group-size", Params.get("groupSize", (p) => { return parseInt(p) || 10 }));
+  lt.setAttribute("use-isa", Params.get("useISA", (p) => { return parseInt(p)}));
   lt.id = "lt";
   contentDiv.appendChild(lt);
   Base.populate(lt, statusDiv);

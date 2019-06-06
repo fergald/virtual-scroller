@@ -82,12 +82,13 @@
     <ul>
       <li>10K elements
         <ul>
-          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Link</a> (60 FPS)<br>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Using element.slot</a> (60 FPS)<br>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1&useISA=1">Using imperative slot assignment</a> <span class="terrible">(1 FPS)</span><br>
         </ul>
       </li>
       <li>100K elements
         <ul>
-          <li><a href="binary-tree-slots.html?divs=100000&useLT=1">Link</a> <span class="terrible">(terrible)</span>5 FPS (insertNode=15ms, assignedNodes=30ms, recalc style=10ms and maybe a lot of <a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+          <li><a href="binary-tree-slots.html?divs=100000&useLT=1">Using element.slot</a> <span class="terrible">5 FPS</span> (insertNode=15ms, assignedNodes=30ms, recalc style=10ms and maybe a lot of <a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
         </ul>
       </li>
     </ul>
