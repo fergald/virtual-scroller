@@ -26,7 +26,7 @@ class LockingTree extends HTMLElement {
   childToSlot = new WeakMap();
 
   root;
-  visbleSlot;
+  visibleSlot;
 
   constructor() {
     super();
