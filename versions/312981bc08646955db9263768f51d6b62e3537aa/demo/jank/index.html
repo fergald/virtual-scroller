@@ -1,0 +1,111 @@
+<style>
+  .terrible { background-color: #cc0202 }
+  .bad { background-color: #ff7900 }
+</style>
+
+<ul>
+  <li><b>Resizing</b></li>
+  <ul>
+    <li>10K elements
+      <ul>
+        <li><a href="resize.html?divs=10000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
+        <li><a href="resize.html?divs=10000&useVC=1">With virtual-content <span class="bad">(not terrible)</span></a><br>
+      </ul>
+    </li>
+    <li>100K elements
+      <ul>
+        <li><a href="resize.html?divs=100000&useVC=0">Without virtual-content <span class="terrible">(terrible)</span></a><br>
+        <li><a href="resize.html?divs=100000&useVC=1">With virtual-content <span class="terrible">(terrible)</span></a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+      </ul>
+    </li>
+  </ul>
+  <li><b>Scrolling</b></li>
+  <ul>
+    <li>10K elements
+      <ul>
+        <li>Scroll by 50px
+          <ul>
+            <li><a href="scroll.html?divs=10000&useVC=0">Without virtual-content (smooth)</a><br>
+            <li><a href="scroll.html?divs=10000&useVC=1">With virtual-content <span class="bad">(not terrible but 50ms/frame)</span></a><br>
+          </ul>
+        <li>Scroll by several pages
+          <ul>
+            <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=0">Without virtual-content (smooth)</a><br>
+            <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=1">With virtual-content (<span class="terrible">completely blank!</span>)</a><br>
+            <li><a href="scroll.html?divs=10000&scrollBy=5000&useVC=1&useForcedLayouts=1">With virtual-content and forced-layouts (<span class="terrible">not blank but low FPS</span>)</a><br>
+          </ul>
+      </ul>
+    </li>
+    <li>100K elements
+      <ul>
+        <li><a href="scroll.html?divs=100000&useVC=0">Without virtual-content (smooth)</a><br>
+        <li><a href="scroll.html?divs=100000&useVC=1">With virtual-content <span class="terrible">(terrible)</span></a> (<a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+      </ul>
+    </li>
+  </ul>
+  <li><b>Binary slot tree prototype</b>
+    <p>This is a new approach where a tree of slots is maintained.
+      The elements are assigned to locked slots in this tree,
+      except for the visible elements.
+      These are temporarily assigned to the special visible-slot.
+      This slot is inserted into the tree adjacent to a locked slot
+      and all of its ancestors are unlocked.
+      When we want to make a different set of elements visible,
+      we reassign all the elements back to their "natural" locked slots,
+      move the visible slot to the right place in the tree
+      and assign the newly visible elements to it,
+      unlocking all of it's current ancestors
+      (and relocking it's previous ancestors).
+      Because this assigns all of the visible elements to a single slot,
+      it should avoid the problems of the previous tree approach,
+      e.g. breaking margin-collapsing.
+      However we can no longer rely on the layout engine to size the empty space above/below the visible content.</p>
+    <p><b>This is not a scroller</b>, it's a proof-of-concept for benchmarking.
+      It cannot handle updates
+      and does not manage spacer divs above/below the unlocked content.
+      It simply cycles through groups of elements,
+      revealing chunks of 10 as fast as frame rate allows.</p>
+
+    <p>Particularly interesting are 3 things that seem unexpectedly slow.
+      They all seem like O(n) effects that we should fix.
+      <ul>
+        <li>insertBefore (used to move the visible slot from one location to another)
+          seems very expensive given that we are just moving it around a tree
+        <li>slot.assignedNodes() seems very expensive given that it returns 10 elements in these demos.
+          It appears to go as O(n) in the number of children of element,
+          not the number of nodes assigned to this slot.
+        <li>Recalc style seems slow, 15ms for 43 elements (in the 100K case).
+          Something is over-invalidating?
+          Or maybe we can tweak the styles of the custom elements.
+      </ul>
+    </p>
+    <ul>
+      <li>10K elements
+        <ul>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Link</a> (60 FPS)<br>
+        </ul>
+      </li>
+      <li>100K elements
+        <ul>
+          <li><a href="binary-tree-slots.html?divs=100000&useLT=1">Link</a> <span class="terrible">(terrible)</span>5 FPS (insertNode=15ms, assignedNodes=30ms, recalc style=10ms and maybe a lot of <a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><b>Existing surprising jank</b></li>
+  <ul>
+    <li>100K elements under a counter - the counter is in a fixed-size
+      DIV but changing the content incurs a massive cost from the 100K
+      elements below it even if they are in a scroller with strict
+      containment (some scenarios are better than others). This is
+      orthogonal to virtual content
+      etc. <a href="https://crbug.com/969683">https://crbug.com/969683</a>
+      <ul>
+        <li><a href="static-content-counter.html?divs=100000&strict=1">With strict on both <span class="terrible">(long layout, layer tree)</a><br>
+        <li><a href="static-content-counter.html?divs=100000">Without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
+        <li><a href="static-content-counter.html?divs=100000&overflow=1&strict=1">Scroller with strict on both <span class="terrible">(long layout, layer tree)</a><br>
+        <li><a href="static-content-counter.html?divs=100000&overflow=1">Scroller without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
+      </ul>
+    </li>
+  </ul>
+</ul>
