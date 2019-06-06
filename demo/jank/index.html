@@ -108,11 +108,13 @@
         <li><a href="static-content-counter.html?divs=100000&overflow=1">Scroller without strict <span class="terrible">(very long layout, layer tree and paint)</a><br>
       </ul>
     </li>
-    <li>100K elements 10K slots. 99990 elements not assigned to any
-      slot, 10 elements swapping between the first and second
-      slot. Style recalc takes 10ms for 10 affected elements.
+    <li>100K elements 10K slots.
+      All except 20 elements are not assigned to any slot,
+      2 groups of 10 elements swap between the first and second slot.
+      Style recalc and assignedNodes seem O(n) in the number of elements, not in the number of elements that have changed.
       <ul>
-        <li><a href="assigned-nodes-slow.html?divs=100000">100K elements</a>
+        <li><a href="assigned-nodes-slow.html?divs=100000">100K elements - assignedNodes=6ms, recalcStyle=10ms</a>
+        <li><a href="assigned-nodes-slow.html?divs=500000">500K elements - assignedNodes=30ms, recalcStyle=45ms</a>
       </ul>
     </li>
   </ul>
