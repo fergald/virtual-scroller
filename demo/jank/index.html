@@ -119,5 +119,14 @@
         <li><a href="assigned-nodes-slow.html?divs=500000">500K elements - assignedNodes=30ms, recalcStyle=45ms</a>
       </ul>
     </li>
+    <li>
+      <p><b>insertBefore is slow with slots</b></a>
+      <p>SlotAssignment::FindHostChildBySlotName iterates over all children.
+      <ul>
+        <li><a href="insert-before-slow.html?divs=10000&slots=1000">10K elements - insertBefore=1.3ms</a>
+        <li><a href="insert-before-slow.html?divs=100000&slots=1000">100K elements - insertBefore=12ms</a>
+        <li><a href="insert-before-slow.html?divs=500000&slots=1000">500K elements - insertBefore=47ms</a>
+      </ul>
+    </li>
   </ul>
 </ul>
