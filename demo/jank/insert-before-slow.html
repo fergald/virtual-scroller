@@ -44,11 +44,7 @@
     }
 
     moveRoamingSlot(i) {
-      if (i % 2) {
-        this.shadowRoot.appendChild(this.roamingSlot);
-      } else {
-        this.roamingSlot.remove();
-      }
+      this.shadowRoot.insertBefore(this.roamingSlot, this.slots[i % this.slots.length]);
     }
   }
 
