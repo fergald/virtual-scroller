@@ -173,45 +173,6 @@ class LockingTree extends HTMLElement {
     }
     this.assign(this.childToSlot.get(elements[0]), elements);
   }
-
-  revealLeaf(leafs) {
-    let elements = new Set();
-    for (const leaf of leafs) {
-      this.findForNode(leaf, elements);
-    }
-    this.setRevealed(elements);
-  }
-
-  setRevealed(newRevealed) {
-    let locked = new Set();
-    let unlocked = new Set();
-    console.time("unlock")
-    for (const e of newRevealed) {
-      if (this.revealed.has(e)) {
-        this.revealed.delete(e);
-      } else {
-        this.unlock(e);
-        unlocked.add(e)
-      }
-    }
-    console.timeEnd("unlock")
-    console.time("lock")
-    for (const e of this.revealed) {
-      this.lock(e);
-      locked.add(e)
-    }
-    console.timeEnd("lock")
-    this.revealed = newRevealed;
-    console.log("setRevealed");
-      console.log("locked", locked);
-      console.log("unlocked", unlocked);
-  }
-
-  update() {
-    for (let e of this.leaves) {
-      e.displayLock.update();
-    }
-  }
 }
 
 customElements.define('locking-tree', LockingTree);
