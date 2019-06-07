@@ -1,0 +1,59 @@
+<div style="width: 100%; display: flex">
+  <raf-spinner id=spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+  </div>
+</div>
+<input type=button onClick="togglePause()" value="toggle pause">
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
+
+<script type="module">
+  import '../util/raf-spinner.mjs';
+  import * as Locker from '../util/Locker.mjs';
+  import * as Params from '../util/Params.mjs';
+  import * as Base from './base.mjs';
+  import * as LockingTree from './LockingTree.mjs';
+
+  let statusDiv = document.getElementById("statusDiv")
+  if (Params.get("pauseSpinner", (p) => { return parseInt(p)}, statusDiv)) {
+    document.getElementById("spinner").pause();
+  }
+  let useLT = Params.get("useLT", (p) => {return parseInt(p) || 0}, statusDiv);
+  let elementType = useLT ? "locking-tree" : "div";
+  let lt = document.createElement(elementType);
+  lt.setAttribute("group-size", Params.get("groupSize", (p) => { return parseInt(p) || 10 }));
+  lt.setAttribute("use-isa", Params.get("useISA", (p) => { return parseInt(p)}));
+  lt.id = "lt";
+  contentDiv.appendChild(lt);
+  Base.populate(lt, statusDiv);
+  lt.populate();
+
+  function getBCR(e) {
+    let t = performance.now();
+    e.getBoundingClientRect();
+    console.log("Took: ", performance.now() - t, e);
+  }
+
+  let pause = false;
+  function togglePause() {
+    pause = !pause;
+  }
+  window.togglePause = togglePause;
+
+  function update(i) {
+    if (pause) {
+      return;
+    }
+    let childIndex = (i*10) % lt.children.length;
+    lt.revealElementAndSiblings(lt.children[childIndex]);
+  }
+
+  let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
+  function go() {
+    console.log("Start unlocking", nFrames);
+    Base.everyNFrames(nFrames, update);
+  }
+  go();
+</script>
