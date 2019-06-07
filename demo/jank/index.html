@@ -120,7 +120,7 @@
       </ul>
     </li>
     <li>
-      <p><b>insertBefore is slow with slots</b></a>
+      <p><b>insertBefore is slow with slots</b> - <a href="https://crbug.com/971930">https://crbug.com/971930</a>
       <p>SlotAssignment::FindHostChildBySlotName iterates over all children.
       <ul>
         <li><a href="insert-before-slow.html?divs=10000&slots=1000">10K elements - insertBefore=1.3ms</a>
