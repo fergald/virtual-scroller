@@ -530,6 +530,7 @@ export class VirtualContent extends HTMLElement {
 
   reveal(element) {
     this.revealed.add(element);
+    this.resizeObserver.observe(element);
     if (this.useColor) {
       element.style.color = "green";
     }
@@ -540,6 +541,7 @@ export class VirtualContent extends HTMLElement {
 
   hide(element) {
     this.revealed.delete(element);
+    this.resizeObserver.unobserve(element);
     if (this.useColor) {
       element.style.color = "red";
     }
@@ -630,7 +632,6 @@ export class VirtualContent extends HTMLElement {
     // Removed children should have be made visible again. We stop observing
     // them for resize so we should discard any size info we have to them as it
     // may become incorrect.
-    this.resizeObserver.unobserve(element);
     if (this.observed.has(element)) {
       this.unobserve(element);
     }
@@ -647,7 +648,6 @@ export class VirtualContent extends HTMLElement {
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    this.resizeObserver.observe(element);
     this.revealed.add(element);
     if (this.useIntersection) {
       this.observe(element);
