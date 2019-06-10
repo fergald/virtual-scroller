@@ -43,7 +43,7 @@
       </ul>
     </li>
   </ul>
-  <li><b>Binary slot tree prototype</b>
+  <li><a id="binary-slot-tree"><b>Binary slot tree prototype</b></a>
     <p>This is a new approach where a tree of slots is maintained.
       The elements are assigned to locked slots in this tree,
       except for the visible elements.
@@ -70,13 +70,16 @@
       They all seem like O(n) effects that we should fix.
       <ul>
         <li>insertBefore (used to move the visible slot from one location to another)
-          seems very expensive given that we are just moving it around a tree
+          seems very expensive given that we are just moving it around a tree.
+          <a href="https://crbug.com/971930">https://crbug.com/971930</a>
         <li>slot.assignedNodes() seems very expensive given that it returns 10 elements in these demos.
           It appears to go as O(n) in the number of children of element,
           not the number of nodes assigned to this slot.
+          <a href="https://crbug.com/971588">https://crbug.com/971588</a>
         <li>Recalc style seems slow, 15ms for 43 elements (in the 100K case).
           Something is over-invalidating?
           Or maybe we can tweak the styles of the custom elements.
+          <a href="https://crbug.com/971588">https://crbug.com/971588</a>
       </ul>
     </p>
     <ul>
