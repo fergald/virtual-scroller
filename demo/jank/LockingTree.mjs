@@ -47,7 +47,6 @@ class LockingTree extends HTMLElement {
   populate() {
     this.groupSize = parseInt(this.getAttribute("group-size")) || 10;
     this.useISA = parseInt(this.getAttribute("use-isa"));
-    let elementCount = this.children.length;
 
     let slots = [];
     let slot;
