@@ -1,3 +1,6 @@
+<div>
+  This assigns divs to slots and then moves one of the slots around using <code>insertBefore</code>.
+</div>
 <div style="width: 100%; display: flex">
   <raf-spinner id=spinner></raf-spinner>
   <div id=statusDiv>
@@ -21,8 +24,6 @@
     constructor() {
       super();
       this.shadowRoot = this.attachShadow({mode: 'closed'});
-      this.roamingSlot = document.createElement("slot");
-      this.roamingSlot.name = "roaming";
     }
 
     populate() {
@@ -32,18 +33,32 @@
       let slot;
       let i = 0;
 
+      this.div = document.createElement("div");
+      Locker.locker.lock(this.div);
+      this.div.style = "contain: style layout";
+      this.shadowRoot.appendChild(this.div);
+
       for (let i = 0; i < slotCount; i++) {
         let slot = document.createElement("slot");
-        this.shadowRoot.appendChild(slot);
+        this.div.appendChild(slot);
         slots.push(slot);
         slot.name = slots.length;
+      }
+      this.roamingSlot = document.createElement("slot");
+      this.roamingSlot.name = "roaming";
+      this.roamingSlot;
+
+      i = 0;
+      for (const element of this.childNodes) {
+        element.slot = i % slotCount;
+        i++;
       }
 
       this.slots = slots;
     }
 
     moveRoamingSlot(i) {
-      this.shadowRoot.insertBefore(this.roamingSlot, this.slots[i % this.slots.length]);
+      this.div.insertBefore(this.roamingSlot, this.slots[i % this.slots.length]);
     }
   }
 
