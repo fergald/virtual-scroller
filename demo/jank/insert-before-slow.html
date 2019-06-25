@@ -34,8 +34,6 @@
       let i = 0;
 
       this.div = document.createElement("div");
-      Locker.locker.lock(this.div);
-      this.div.style = "contain: style layout";
       this.shadowRoot.appendChild(this.div);
 
       for (let i = 0; i < slotCount; i++) {
