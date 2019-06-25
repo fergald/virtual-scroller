@@ -1,0 +1,74 @@
+Create <input id=divCount value=10000> paragraphs of locked content and resizes it in a loop.<br>
+
+<input type=button value=go onClick="go()"><br>
+<input type=button value=stop onClick="stop()"><br>
+<style>
+div {
+  display: block !important;
+  contain: layout style;
+  font-size: 10pt;
+}
+</style>
+
+
+<div id=stats>
+</div>
+<div id=contentDiv>
+</div>
+
+<script type="module">
+  import * as Words from '../util/Words.mjs';
+  import * as Locker from '../util/Locker.mjs'
+
+  let locker = new Locker.Locker();
+
+  function getBCR(e) {
+    let t = performance.now();
+    e.getBoundingClientRect();
+    console.log("Took: ", performance.now() - t, e);
+  }
+
+  function construct() {
+    let words = Words.words(50);
+    let divs = Words.divs(divCount.value, words);
+    let i = 0;
+    for (const e of divs) {
+      contentDiv.appendChild(e);
+      if (i++ > 0) {
+        locker.lock(e);
+      }
+    }
+  }
+
+  let i = 100;
+  function go() {
+    i = 100;
+    contentDiv.innerHTML = "";
+    construct();
+    console.log("Constructed");
+    doIfI();
+  }
+  window.go = go;
+
+  function stop() {
+    i = -1;
+  }
+  window.stop = stop;
+
+  function resize() {
+    contentDiv.style.width = contentDiv.style.width == "200px" ? "" : "200px";
+  }
+
+  function doIfI() {
+    if (i-- < 0) {
+      return;
+    }
+    getBCR(contentDiv);
+    resize();
+    getBCR(contentDiv);
+
+    setTimeout(() => {
+      doIfI();
+    }, 0);
+  }
+</script>
