@@ -200,7 +200,6 @@ export class VirtualContent extends HTMLElement {
       ["useLocking", [this.setUseLocking, "Whether to lock elements or just change their color"]],
       ["useIntersection", [this.setUseIntersection, "Use intersection observers on all elements"]],
       ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
-//      ["useScrollEvents", [this.setUseScrollEvents, ""]],
     ]);
 
     for (let key of setters.keys()) {

@@ -16,7 +16,6 @@
     vc = document.createElement("virtual-content");
     vc.setUseLocking(useLocking.checked);
     vc.setUseIntersection(useIntersection.checked);
-    vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
     vc.setUseForcedLayouts(useForcedLayouts.checked, contentDiv);
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
@@ -42,13 +41,6 @@
     vc.logInfo();
   }
   window.logInfo = logInfo;
-
-  function onChangeUseScrollEvents() {
-    if (vc) {
-      vc.setUseScrollEvents(useScrollEvents.checked, contentDiv);
-    }
-  }
-  window.onChangeUseScrollEvents = onChangeUseScrollEvents;
 
   function onChangeUseForcedLayouts() {
     if (vc) {
@@ -83,7 +75,6 @@
   Word Count: <input id=wordCount value=100><br>
   Use Display Locking: <input id=useLocking type=checkbox checked><br>
   Use Intersection Observer (not binary search): <input id=useIntersection type=checkbox><br>
-  Use Scroll Events (live): <input id=useScrollEvents type=checkbox onchange="onChangeUseScrollEvents()"><br>
   Use forced layouts: <input id=useForcedLayouts type=checkbox onchange="onChangeUseForcedLayouts()" checked><br>
   <br>
   <input type=button onClick="populate()" value="Go" id=goButton>
