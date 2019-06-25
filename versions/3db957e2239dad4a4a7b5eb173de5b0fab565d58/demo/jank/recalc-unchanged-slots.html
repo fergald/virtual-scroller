@@ -1,0 +1,101 @@
+<div>
+  This assigns divs to slots and then moves one of the elements around by changing its slot assignment.
+</div>
+<div style="width: 100%; display: flex">
+  <raf-spinner id=spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+  </div>
+</div>
+<input type=button onClick="togglePause()" value="toggle pause">
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
+
+<script type="module">
+  'use strict';
+
+  import * as Locker from '../util/Locker.mjs';
+
+  class SlowSlots extends HTMLElement {
+    shadowRoot;
+
+    constructor() {
+      super();
+      this.shadowRoot = this.attachShadow({mode: 'closed'});
+    }
+
+    populate() {
+      let slotCount = parseInt(this.getAttribute("slot-count")) || 2;
+
+      let slots = [];
+      let slot;
+      let i = 0;
+
+      this.div = document.createElement("div");
+      this.div.style = "contain: style layout";
+      if (this.div.displayLock) {
+        Locker.locker.lock(this.div);
+      } else {
+        Locker.locker.warn(document.body);
+      }
+      this.shadowRoot.appendChild(this.div);
+
+      for (let i = 0; i < slotCount; i++) {
+        let slot = document.createElement("slot");
+        this.div.appendChild(slot);
+        slots.push(slot);
+        slot.name = slots.length;
+      }
+
+      i = 0;
+      for (const element of this.childNodes) {
+        element.slot = i % slotCount;
+        i++;
+      }
+
+      this.slots = slots;
+    }
+
+    updateOneSlot(i) {
+      this.firstElementChild.slot = i % 2;
+    }
+  }
+
+  customElements.define('slow-slots', SlowSlots);
+</script>
+<script type="module">
+  import '../util/raf-spinner.mjs';
+  import * as Params from '../util/Params.mjs';
+  import * as Base from './base.mjs';
+
+  let statusDiv = document.getElementById("statusDiv")
+  let ss = document.createElement("slow-slots");
+  ss.setAttribute("slot-count", Params.get("slots", (p) => { return parseInt(p) || 1000}, statusDiv));
+  if (Params.get("pauseSpinner", (p) => { return parseInt(p)}, statusDiv)) {
+    document.getElementById("spinner").pause();
+  }
+  ss.id = "ss";
+  contentDiv.appendChild(ss);
+  Base.populate(ss, statusDiv);
+  ss.populate();
+
+  let pause = false;
+  function togglePause() {
+    pause = !pause;
+  }
+  window.togglePause = togglePause;
+
+  function update(i) {
+    if (pause) {
+      return;
+    }
+    ss.updateOneSlot(i);
+  }
+
+  let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
+  function go() {
+    Base.everyNFrames(nFrames, update);
+  }
+  go();
+</script>
