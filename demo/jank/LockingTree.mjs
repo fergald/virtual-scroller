@@ -85,8 +85,9 @@ class LockingTree extends HTMLElement {
       return;
     }
     tree.id = label;
-    this.labelTree(tree.firstElementChild, label + "0");
-    this.labelTree(tree.lastElementChild, label + "1");
+    for (let i = 0; i < tree.children.length; i++) {
+      this.labelTree(tree.children[i], label + i);
+    }
   }
 
   assign(slot, elements) {
