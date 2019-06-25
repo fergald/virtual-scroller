@@ -149,8 +149,6 @@ export class VirtualContent extends HTMLElement {
 
   useLocking;
   useColor = COLOUR_DEFAULT;
-  scrollEventListener;
-  nearestScrollingAncestor;
 
   useIntersection = false;
 
@@ -190,20 +188,6 @@ export class VirtualContent extends HTMLElement {
       nextSibling: null,
     }]);
     this.mutationObserver.observe(this, {childList: true});
-
-    // `capture: true` helps support the nested <virtual-content> case. (Which
-    // is not yet officially supported, but we're trying.) In particular, this
-    // ensures that the events handlers happen from outermost <virtual-content>
-    // inward, so that we remove invisible="" from the outside in. Then, by the
-    // time we get to the innermost node, all of its parents are no longer
-    // invisible="", and thus it will be rendered (allowing us to accurately
-    // measure its height, etc.)
-    this.addEventListener(
-        'activateinvisible', this.onActivateinvisible, {capture: true});
-
-    this.scrollEventListener = e => {
-      this.scheduleUpdate();
-    };
 
     this.scheduleUpdate();
   }
@@ -260,19 +244,6 @@ export class VirtualContent extends HTMLElement {
 
   setUseForcedLayouts(useForcedLayouts) {
     return this.useForcedLayouts = parseInt(useForcedLayouts) || 0;
-  }
-
-  setUseScrollEvents(useScrollEvents, scroller) {
-    // TODO(fergal): We need some way to know if nearestScrollingAncestor(this) has changed.
-    if (!scroller) {
-      return 0;
-    } else if (useScrollEvents) {
-      scroller.addEventListener('scroll', this.scrollEventListener);
-      return 1;
-    } else {
-      scroller.removeEventListener('scroll', this.scrollEventListener);
-      return 0;
-    }
   }
 
   sync() {
@@ -688,9 +659,6 @@ export class VirtualContent extends HTMLElement {
       this.invalidateSize(entry.target);
     }
     this.scheduleUpdate();
-  }
-
-  onActivateinvisible(e) {
   }
 
   scheduleUpdate() {
