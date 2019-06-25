@@ -1,5 +1,7 @@
 <div>
-  This assigns divs to slots and then moves one of the elements around by changing its slot assignment.
+  This assigns divs to slots and then moves one of the elements around
+  by changing its slot assignment. We see (in chrome://tracing) that
+  RecalcSlotAssignment has a large cost.
 </div>
 <div style="width: 100%; display: flex">
   <raf-spinner id=spinner></raf-spinner>
