@@ -1,7 +1,7 @@
 const DEBUG = false;
 const BUFFER = .2;
-
 const DEFAULT_HEIGHT_ESTIMATE = 100;
+
 const TEMPLATE = `
 <style>
 :host {
@@ -164,10 +164,11 @@ export class VirtualContent extends HTMLElement {
     this.intersectionObserver =
       new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
 
-    this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.resizeObserver = new ResizeObserver(entries => {this.resizeObserverCallback(entries)});
     this.intersectionObserver.observe(this);
 
+    this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
+    this.mutationObserver.observe(this, {childList: true});
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
     // otherwise be seen by the observer.
@@ -179,7 +180,6 @@ export class VirtualContent extends HTMLElement {
       previousSibling: null,
       nextSibling: null,
     }]);
-    this.mutationObserver.observe(this, {childList: true});
 
     this.scheduleUpdate();
   }
