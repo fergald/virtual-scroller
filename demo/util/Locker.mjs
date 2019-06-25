@@ -18,6 +18,14 @@ export class Locker {
   unlock(element, andThen) {
     return element.displayLock.commit().then(andThen, reason => {console.log("Rejected: ", reason)});
   }
+
+  warn(element) {
+    console.warn("Display locking not available");
+    let div = document.createElement("div");
+    div.style.color = "red";
+    div.innerText = "No display locking";
+    element.insertBefore(div, element.firstElementChild);
+  }
 }
 
 export const locker = new Locker();

@@ -33,8 +33,12 @@
       let i = 0;
 
       this.div = document.createElement("div");
-      Locker.locker.lock(this.div);
       this.div.style = "contain: style layout";
+      if (this.div.displayLock) {
+        Locker.locker.lock(this.div);
+      } else {
+        Locker.locker.warn(document.body);
+      }
       this.shadowRoot.appendChild(this.div);
 
       for (let i = 0; i < slotCount; i++) {
