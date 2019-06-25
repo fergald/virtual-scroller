@@ -1,9 +1,6 @@
 const DEBUG = false;
 const BUFFER = .2;
 
-let LOCKING_DEFAULT = 1;
-let COLOUR_DEFAULT = true;
-
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 const TEMPLATE = `
 <style>
@@ -147,9 +144,6 @@ export class VirtualContent extends HTMLElement {
   revealedDiff = new Map();
   observed = new Set();
 
-  useLocking;
-  useColor = COLOUR_DEFAULT;
-
   useIntersection = false;
 
   useForcedLayouts = false;
@@ -163,8 +157,6 @@ export class VirtualContent extends HTMLElement {
 
   constructor() {
     super();
-
-    this.setUseLocking(LOCKING_DEFAULT);
 
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
@@ -197,7 +189,6 @@ export class VirtualContent extends HTMLElement {
     let params = url.searchParams;
     let setters = new Map([
       ["debug", [this.setDebug, "Emit lots of debug info"]],
-      ["useLocking", [this.setUseLocking, "Whether to lock elements or just change their color"]],
       ["useIntersection", [this.setUseIntersection, "Use intersection observers on all elements"]],
       ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
     ]);
@@ -225,16 +216,6 @@ export class VirtualContent extends HTMLElement {
 
   setDebug(debug) {
     return this.debug = parseInt(debug) || 0;
-  }
-
-  setUseLocking(useLocking) {
-    useLocking = parseInt(useLocking) || LOCKING_DEFAULT;
-    if (useLocking && !this.displayLock) {
-      console.log("Disabling locking");
-      return this.useLocking = false;
-    } else {
-      return this.useLocking = useLocking;
-    }
   }
 
   setUseIntersection(useIntersection) {
@@ -496,27 +477,17 @@ export class VirtualContent extends HTMLElement {
   reveal(element) {
     this.revealed.add(element);
     this.resizeObserver.observe(element);
-    if (this.useColor) {
-      element.style.color = "green";
-    }
-    if (this.useLocking) {
-      element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
-    }
+    element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
   }
 
   hide(element) {
     this.revealed.delete(element);
     this.resizeObserver.unobserve(element);
-    if (this.useColor) {
-      element.style.color = "red";
-    }
-    if (this.useLocking) {
-      element.displayLock.acquire({
-        timeout: Infinity,
-        activatable: true,
-        size: [10, this.getHopefulSize(element)],
-      }).then(null, reason => {console.log("Rejected: ", reason.message)});
-    }
+    element.displayLock.acquire({
+      timeout: Infinity,
+      activatable: true,
+      size: [10, this.getHopefulSize(element)],
+    }).then(null, reason => {console.log("Rejected: ", reason.message)});
     this.invalidateSize(element);
   }
 
