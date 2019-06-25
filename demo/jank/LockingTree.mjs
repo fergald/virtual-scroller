@@ -48,8 +48,10 @@ class LockingTree extends HTMLElement {
     this.slotPerChild = parseInt(this.getAttribute("slot-per-child"));
     if (this.slotPerChild) {
       this.groupSize = 1;
+      this.branch = parseInt(this.getAttribute("branch")) || 10;
     } else {
       this.groupSize = parseInt(this.getAttribute("group-size")) || 10;
+      this.branch = 2;
     }
     this.useISA = parseInt(this.getAttribute("use-isa"));
 
@@ -131,11 +133,11 @@ class LockingTree extends HTMLElement {
       let div = document.createElement("div");
       Locker.locker.lock(div);
       newDivs.push(div);
-      div.appendChild(divs[i]);
-      i++;
-      if (i < divs.length) {
+      for (let j = 0; j < this.branch && i < divs.length; j++) {
         div.appendChild(divs[i]);
+        i++;
       }
+      i--;
     }
     return newDivs;
   }
