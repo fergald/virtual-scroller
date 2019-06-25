@@ -45,7 +45,12 @@ class LockingTree extends HTMLElement {
   }
 
   populate() {
-    this.groupSize = parseInt(this.getAttribute("group-size")) || 10;
+    this.slotPerChild = parseInt(this.getAttribute("slot-per-child"));
+    if (this.slotPerChild) {
+      this.groupSize = 1;
+    } else {
+      this.groupSize = parseInt(this.getAttribute("group-size")) || 10;
+    }
     this.useISA = parseInt(this.getAttribute("use-isa"));
 
     let slots = [];
@@ -152,12 +157,53 @@ class LockingTree extends HTMLElement {
   }
 
   revealElementAndSiblings(element) {
+    if (this.slotPerChild) {
+      this.revealElementSlotPerChild(element);
+    } else {
+      this.revealElementAndSiblingsVisibleSlot(element);
+    }
+  }
+
+  revealElementAndSiblingsVisibleSlot(element) {
     let slot = this.childToSlot.get(element);
     this.restoreVisibleElements();
     this.applyToAncestors(this.visibleSlot, (e) => {Locker.locker.lock(e)});
     slot.parentElement.insertBefore(this.visibleSlot, slot);
     this.applyToAncestors(this.visibleSlot, (e) => {Locker.locker.unlock(e)});
     this.makeElementsVisible(this.slotToChildren.get(slot));
+  }
+
+  nextSiblings(element, count, direction, siblings) {
+    while (element != null && count) {
+      siblings.push(element);
+      element = direction == -1 ? element.previousSibling : element.nextSibling;
+      count--;
+    }
+  }
+
+  revealElementSlotPerChild(element) {
+    let elements = [element];
+    this.nextSiblings(element.previousSibling, 5, -1, elements);
+    this.nextSiblings(element.nextSibling, 5, +1, elements);
+    let ancestors = new Set();
+    this.findAncestorsForElements(elements, ancestors);
+    this.updateRevealed(ancestors);
+  }
+
+  updateRevealed(newRevealed) {
+    for (const e of this.revealed) {
+      if (!newRevealed.has(e)) {
+        e.style.display = "block";
+        Locker.locker.lock(e);
+      }
+    }
+    for (const e of newRevealed) {
+      if (!this.revealed.has(e)) {
+        e.style.display = "contents";
+        Locker.locker.unlock(e);
+      }
+    }
+    this.revealed = newRevealed;
   }
 
   applyToAncestors(slot, call) {

@@ -25,6 +25,7 @@
   let lt = document.createElement(elementType);
   lt.setAttribute("group-size", Params.get("groupSize", (p) => { return parseInt(p) || 10 }, statusDiv));
   lt.setAttribute("use-isa", Params.get("useISA", (p) => { return parseInt(p)}, statusDiv));
+  lt.setAttribute("slot-per-child", Params.get("slotPerChild", (p) => { return parseInt(p) || 0}, statusDiv));
   lt.id = "lt";
   contentDiv.appendChild(lt);
   Base.populate(lt, statusDiv);
