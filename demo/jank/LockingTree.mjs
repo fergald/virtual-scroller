@@ -134,17 +134,19 @@ class LockingTree extends HTMLElement {
     return newDivs;
   }
 
-  findAncestorsForElement(element, elements) {
-    findAncestorsForSlot(this.childToSlot.get(element));
+  findAncestorsForElements(elements, ancestors) {
+    for (const element of elements) {
+      this.findAncestorsForSlot(this.childToSlot.get(element), ancestors);
+    }
   }
 
-  findAncestorsForSlot(slot, elements) {
+  findAncestorsForSlot(slot, ancestors) {
     let element = slot.parentElement;
     if (!element) {
       return;
     }
-    while (element != this.root) {
-      elements.push(element);
+    while (element != this.root && !ancestors.has(element)) {
+      ancestors.add(element);
       element = element.parentElement;
     }
   }
@@ -159,7 +161,7 @@ class LockingTree extends HTMLElement {
   }
 
   applyToAncestors(slot, call) {
-    let ancestors = [];
+    let ancestors = new Set();
     this.findAncestorsForSlot(slot, ancestors);
     for (const a of ancestors) {
       call(a);
