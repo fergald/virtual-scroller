@@ -16,7 +16,6 @@ const TEMPLATE = `
   display: block !important;
   contain: layout style
 }
-
 </style>
 <slot></slot>
 `;
@@ -241,10 +240,10 @@ export class VirtualContent extends HTMLElement {
     this.sizeManager.invalidate(element);
   }
 
-  removeElement(element) {
+  remove(element) {
     // Removed children should have be made visible again. We should
-    // stop observing them and discard any size info we have to them
-    // as it may become incorrect.
+    // stop observing them and discard any size info we have for them
+    // as it may have become incorrect.
     this.revealed.delete(element);
     this.intersectionObserver.unobserve(element);
     this.elementResizeObserver.unobserve(element);
@@ -254,7 +253,7 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  addElement(element) {
+  add(element) {
     // Added children should be invisible initially. We want to make them
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
@@ -263,23 +262,35 @@ export class VirtualContent extends HTMLElement {
   }
 
   mutationObserverCallback(records) {
-    // TODO: Does a move of an element show up as a remove and
-    // add?). Need to cope with that.
     let relevantMutation = false;
+    const toRemove = new Set();
     for (const record of records) {
+      relevantMutation = relevantMutation || record.removedNodes.size > 0;
       for (const node of record.removedNodes) {
-        relevantMutation = true;
         if (node.nodeType === Node.ELEMENT_NODE) {
-          this.removeElement(node);
+          toRemove.add(node);
         }
       }
+    }
 
+    const toAdd = new Set();
+    for (const record of records) {
+      relevantMutation = relevantMutation || record.addedNodes.size > 0;
       for (const node of record.addedNodes) {
-        relevantMutation = true;
         if (node.nodeType === Node.ELEMENT_NODE) {
-          this.addElement(node);
+          if (toRemove.has(node)) {
+            toRemove.delete(node);
+          } else {
+            toAdd.add(node);
+          }
         }
       }
+    }
+    for (const node of toRemove) {
+      this.remove(node);
+    }
+    for (const node of toAdd) {
+      this.add(node);
     }
 
     if (relevantMutation) {
