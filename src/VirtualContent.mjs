@@ -1,4 +1,4 @@
-const BUFFER = .2;
+const BUFFER = 0.2;
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 
 const TEMPLATE = `
@@ -22,10 +22,10 @@ const TEMPLATE = `
 
 // a - b
 function setDifference(a, b) {
-  let result = new Set();
+  const result = new Set();
   for (const element of a) {
     if (!b.has(element)) {
-      result.add(element)
+      result.add(element);
     }
   }
   return result;
@@ -39,7 +39,7 @@ class ElementBounds {
   }
 
   elementSet() {
-    let result = new Set();
+    const result = new Set();
     let element = this.low;
     while (element) {
       result.add(element);
@@ -60,9 +60,9 @@ function findElementIndex(elements, offset) {
     if (low === high) {
       return low;
     }
-    i = Math.floor((low + high)/2);
-    let element = elements[i];
-    let rect = element.getBoundingClientRect();
+    i = Math.floor((low + high) / 2);
+    const element = elements[i];
+    const rect = element.getBoundingClientRect();
     if (rect.top > offset) {
       // The entire rect is > offset.
       high = Math.max(i - 1, low);
@@ -82,8 +82,8 @@ function findElement(elements, offset) {
 }
 
 function findElementBounds(elements, low, high) {
-  let lowElement = findElement(elements, low);
-  let highElement = findElement(elements, high);
+  const lowElement = findElement(elements, low);
+  const highElement = findElement(elements, high);
 
   return new ElementBounds(lowElement, highElement);
 }
@@ -104,7 +104,7 @@ class SizeManager {
       oldSize = 0;
       this.measuredCount++;
     }
-    let newSize = element.offsetHeight;
+    const newSize = element.offsetHeight;
     this.totalMeasuredSize += newSize - oldSize;
     this.sizes.set(element, newSize);
     this.sizeValid.set(element, true);
@@ -115,7 +115,7 @@ class SizeManager {
   }
 
   getHopefulSize(element) {
-    let size = this.sizes.get(element);
+    const size = this.sizes.get(element);
     return size === undefined ? this.getAverageSize() : size;
   }
 
@@ -148,26 +148,36 @@ export class VirtualContent extends HTMLElement {
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
 
-    this.intersectionObserver = new IntersectionObserver(() => {this.scheduleUpdate()});
+    this.intersectionObserver = new IntersectionObserver(() => {
+      this.scheduleUpdate();
+    });
 
-    this.thisResizeObserver = new ResizeObserver(() => {this.scheduleUpdate()});
+    this.thisResizeObserver = new ResizeObserver(() => {
+      this.scheduleUpdate();
+    });
     this.thisResizeObserver.observe(this);
 
-    this.elementResizeObserver = new ResizeObserver(entries => {this.elementResizeObserverCallback(entries)});
+    this.elementResizeObserver = new ResizeObserver(entries => {
+      this.elementResizeObserverCallback(entries);
+    });
 
-    this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
+    this.mutationObserver = new MutationObserver(records => {
+      this.mutationObserverCallback(records);
+    });
     this.mutationObserver.observe(this, {childList: true});
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
     // otherwise be seen by the observer.
-    this.mutationObserverCallback([{
-      type: 'childList',
-      target: this,
-      addedNodes: Array.from(this.childNodes),
-      removedNodes: [],
-      previousSibling: null,
-      nextSibling: null,
-    }]);
+    this.mutationObserverCallback([
+      {
+        type: 'childList',
+        target: this,
+        addedNodes: Array.from(this.childNodes),
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+      },
+    ]);
 
     this.scheduleUpdate();
   }
@@ -178,15 +188,15 @@ export class VirtualContent extends HTMLElement {
     }
 
     this.measureRevealed();
-    let desiredLow = 0 - window.innerHeight * BUFFER;
-    let desiredHigh =  window.innerHeight + window.innerHeight * BUFFER;
-    let newBounds = findElementBounds(this.children, desiredLow, desiredHigh);
-    let newRevealed = newBounds.elementSet();
+    const desiredLow = 0 - window.innerHeight * BUFFER;
+    const desiredHigh = window.innerHeight + window.innerHeight * BUFFER;
+    const newBounds = findElementBounds(this.children, desiredLow, desiredHigh);
+    const newRevealed = newBounds.elementSet();
 
-    let toHide = setDifference(this.revealed, newRevealed);
+    const toHide = setDifference(this.revealed, newRevealed);
     toHide.forEach(e => this.hide(e));
 
-    let toReveal = setDifference(newRevealed, this.revealed);
+    const toReveal = setDifference(newRevealed, this.revealed);
     toReveal.forEach(e => this.reveal(e));
 
     // Now we have revealed what we hope will fill the screen. If we
@@ -211,7 +221,9 @@ export class VirtualContent extends HTMLElement {
   }
 
   unlock(element) {
-    element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
+    element.displayLock.commit().then(null, reason => {
+      console.log('Rejected: ', reason);
+    });
   }
 
   hide(element) {
@@ -222,7 +234,9 @@ export class VirtualContent extends HTMLElement {
       timeout: Infinity,
       activatable: true,
       size: [10, this.sizeManager.getHopefulSize(element)],
-    }).then(null, reason => {console.log("Rejected: ", reason.message)});
+    }).then(null, reason => {
+      console.log('Rejected: ', reason.message);
+    });
     this.sizeManager.invalidate(element);
   }
 
@@ -290,8 +304,9 @@ export class VirtualContent extends HTMLElement {
   }
 
   scheduleUpdate() {
-    if (this.updateRAFToken !== undefined)
+    if (this.updateRAFToken !== undefined) {
       return;
+    }
 
     this.updateRAFToken = window.requestAnimationFrame(() => {
       this.updateRAFToken = undefined;
