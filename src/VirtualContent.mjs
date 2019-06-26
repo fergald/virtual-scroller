@@ -125,8 +125,7 @@ export class VirtualContent extends HTMLElement {
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
 
-    this.intersectionObserver =
-      new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
+    this.intersectionObserver = new IntersectionObserver(() => {this.scheduleUpdate()});
 
     this.thisResizeObserver = new ResizeObserver(() => {this.scheduleUpdate()});
     this.thisResizeObserver.observe(this);
@@ -326,10 +325,6 @@ export class VirtualContent extends HTMLElement {
     this.sizeManager.invalidate(element);
   }
 
-  intersectionObserverCallback(entries) {
-    this.scheduleUpdate();
-  }
-
   removeElement(element) {
     // Removed children should have be made visible again. We should
     // stop observing them and discard any size info we have to them
@@ -402,5 +397,4 @@ export class VirtualContent extends HTMLElement {
       this.sync();
     });
   }
-
 }
