@@ -266,11 +266,11 @@ export class VirtualContent extends HTMLElement {
       return;
     }
 
-    let windowBounds = new Range(0, window.innerHeight);
+    let desiredBounds = new Range(0 - window.innerHeight * BUFFER, window.innerHeight + window.innerHeight * BUFFER);
     let newRevealedBounds;
     // Grab sizes of all revealed elements for the record.
     this.measureRevealed();
-    newRevealedBounds = this.revealHopefulBounds(windowBounds);
+    newRevealedBounds = this.revealHopefulBounds(desiredBounds);
     let newRevealed = newRevealedBounds.elementSet();
     if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
