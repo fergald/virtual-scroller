@@ -317,34 +317,38 @@ export class VirtualContent extends HTMLElement {
     return this.revealed.size;
   }
 
-  findElement(offset) {
+  findElementIndex(offset) {
     let low = 0;
     let high = this.children.length - 1;
     let i;
     while (true) {
-      i = Math.floor((low + high)/2);
       if (low === high) {
-        break;
+        return low;
       }
-      if (i < 0 || i >= this.children.length) {
-        return null;
-      }
+      i = Math.floor((low + high)/2);
       let element = this.children[i];
       let rect = element.getBoundingClientRect();
-      if (rect.bottom >= offset) {
-        high = i - 1;
-      } else if (rect.top <= offset) {
-        low = i + 1;
+      if (rect.top > offset) {
+        // The entire rect is > offset.
+        high = Math.max(i - 1, low);
+      } else if (rect.bottom < offset) {
+        // The entire rect is < offset.
+        low = Math.min(i + 1, high);
       } else {
+        // The rect contains offset.
         break;
       }
     }
-    return this.children[i];
+    return i;
+  }
+
+  findElement(offset) {
+    return this.children[this.findElementIndex(offset)];
   }
 
   revealHopefulBounds(bounds) {
-    let lowElement = this.findElement(bounds.low) || this.children[0];
-    let highElement = this.findElement(bounds.high) || this.children[this.children.length - 1];
+    let lowElement = this.findElement(bounds.low);
+    let highElement = this.findElement(bounds.high);
 
     return this.range(lowElement, highElement);
   }
