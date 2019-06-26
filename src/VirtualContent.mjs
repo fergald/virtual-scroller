@@ -275,14 +275,15 @@ export class VirtualContent extends HTMLElement {
     if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
     if (this.debug) console.log("toHide", toHide);
-    toHide.forEach(e => this.requestHide(e));
+    toHide.forEach(e => this.hide(e));
 
     let toReveal = this.setDifference(newRevealed, this.revealed);
     if (this.debug) console.log("toReveal", toReveal);
-    toReveal.forEach(e => this.requestReveal(e));
-    // If we are being lazy and not forcing layouts, we need to
-    // check again in the next frame to see if we have more work
-    // to do.
+    toReveal.forEach(e => this.reveal(e));
+
+    // Now we have revealed what we hope will fill the screen. If we
+    // actually made a change, we should come back next frame and
+    // verify whether we have revealed the right amount.
     if (toHide.size > 0 || toReveal.size > 0) {
       this.scheduleUpdate();
       // We had to make an adjustment, so count this frame.
@@ -412,26 +413,6 @@ export class VirtualContent extends HTMLElement {
       size: [10, this.sizeManager.getHopefulSize(element)],
     }).then(null, reason => {console.log("Rejected: ", reason.message)});
     this.sizeManager.invalidate(element);
-  }
-
-  requestReveal(element) {
-    if (this.getRevealed(element)) {
-      if (DEBUG) {
-        throw "is already revealed: " + element;
-      }
-    } else {
-      this.reveal(element);
-    }
-  }
-
-  requestHide(element) {
-    if (!this.getRevealed(element)) {
-      if (this.debug) {
-        throw "is already hidden: " + element;
-      }
-    } else {
-      this.hide(element);
-    }
   }
 
   range(lowElement, highElement) {
