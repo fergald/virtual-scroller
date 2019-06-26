@@ -49,80 +49,19 @@ function setDifference(a, b) {
   return result;
 }
 
-// Represents a range of pixels, from |low| to |high|. |lowElement| if present
-// is an element having lowest edge equal to |low| and |highElement| if present
-// is an element having highest edge equal to |high|.
-class Range {
-  constructor(low, high, lowElement, highElement) {
-    if (DEBUG) {
-      if (low > high) {
-        throw Error(low + " > " + high);
-     }
-    }
+// Represents a range of elements from |low| to |high|.
+class ElementBounds {
+  constructor(low, high) {
     this.low = low;
     this.high = high;
-    this.lowElement = lowElement;
-    this.highElement = highElement;
-  }
-
-  // this :  -----------
-  // other:    ------
-  // result: --      ---
-  minus(other) {
-    let result = [];
-    if (this.low < other.low) {
-      result.push(new Range(this.low, other.low, this.lowElement,
-                            other.lowElement ? other.lowElement.previousElementSibling : null));
-    }
-    if (this.high > other.high) {
-      result.push(new Range(other.high, this.high,
-                            other.highElement ? other.highElement.nextElementSibling : null,
-                            this.highElement));
-    }
-    return result;
-  }
-
-  getThisSize() {
-    return this.high - this.low;
-  }
-
-  overlaps(other) {
-    let low = this.low < other.low ? this : other;
-    let high = this.high > other.high ? this : other;
-    return low.high >= high.low;
-  }
-
-  merge(other) {
-    let low = this.low < other.low ? this : other;
-    let high = this.high > other.high ? this : other;
-    if (low.high < high.low) {
-      throw "Cannot merge, no overlap";
-    }
-    // TODO: Handle 0-width elements in case of equal bounds.
-    return new Range(low.low, high.high, low.lowElement, high.highElement);
-  }
-
-  sameEnds(other) {
-    return other.lowElement === this.lowElement && other.highElement === this.highElement;
-  }
-
-  doToAll(fn) {
-    let element = this.lowElement;
-    while (true) {
-      fn(element);
-      if (element === this.highElement) {
-        break;
-      }
-      element = element.nextElementSibling;
-    }
   }
 
   elementSet() {
     let result = new Set();
-    let element = this.lowElement;
+    let element = this.low;
     while (element) {
       result.add(element);
-      if (element == this.highElement) {
+      if (element === this.high) {
         break;
       }
       element = element.nextElementSibling;
@@ -268,13 +207,12 @@ export class VirtualContent extends HTMLElement {
       return;
     }
 
-    let desiredBounds = new Range(0 - window.innerHeight * BUFFER, window.innerHeight + window.innerHeight * BUFFER);
-    let newRevealedBounds;
-    // Grab sizes of all revealed elements for the record.
     this.measureRevealed();
-    newRevealedBounds = this.revealHopefulBounds(desiredBounds);
-    let newRevealed = newRevealedBounds.elementSet();
-    if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
+    let desiredLow = 0 - window.innerHeight * BUFFER;
+    let desiredHigh =  window.innerHeight + window.innerHeight * BUFFER;
+    let newBounds = this.findElementBounds(desiredLow, desiredHigh);
+    if (this.debug) console.log("newBounds", newBounds);
+    let newRevealed = newBounds.elementSet();
     let toHide = setDifference(this.revealed, newRevealed);
     if (this.debug) console.log("toHide", toHide);
     toHide.forEach(e => this.hide(e));
@@ -369,11 +307,11 @@ export class VirtualContent extends HTMLElement {
     return this.children[this.findElementIndex(offset)];
   }
 
-  revealHopefulBounds(bounds) {
-    let lowElement = this.findElement(bounds.low);
-    let highElement = this.findElement(bounds.high);
+findElementBounds(low, high) {
+    let lowElement = this.findElement(low);
+    let highElement = this.findElement(high);
 
-    return this.range(lowElement, highElement);
+    return new ElementBounds(lowElement, highElement);
   }
 
   measureRevealed() {
@@ -403,11 +341,6 @@ export class VirtualContent extends HTMLElement {
       size: [10, this.sizeManager.getHopefulSize(element)],
     }).then(null, reason => {console.log("Rejected: ", reason.message)});
     this.sizeManager.invalidate(element);
-  }
-
-  range(lowElement, highElement) {
-    return new Range(lowElement.getBoundingClientRect().top, highElement.getBoundingClientRect().bottom,
-                     lowElement, highElement);
   }
 
   intersectionObserverCallback(entries) {
