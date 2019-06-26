@@ -1,4 +1,3 @@
-const DEBUG = false;
 const BUFFER = .2;
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 
@@ -98,11 +97,6 @@ class SizeManager {
 
   ensureValidSize(element) {
     if (this.sizeValid.get(element)) {
-      if (this.debug) {
-        if (this.sizes.has(element) === undefined) {
-          throw "No size for valid size: " + element;
-        }
-      }
       return;
     }
     let oldSize = this.sizes.get(element);
@@ -148,13 +142,6 @@ export class VirtualContent extends HTMLElement {
 
   revealed = new Set();
 
-  // This tracks how many consecutive frames of layout we have done
-  // (this number can be high because we had to do a lot of relayout
-  // or just because the page or scroll-position was changing a lot).
-  framesOfSync = 0;
-
-  debug = DEBUG;
-
   constructor() {
     super();
 
@@ -185,42 +172,7 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
-  setFromUrl(urlString, status) {
-    let url = new URL(urlString);
-    let params = url.searchParams;
-    let setters = new Map([
-      ["debug", [this.setDebug, "Emit lots of debug info"]],
-    ]);
-
-    for (let key of setters.keys()) {
-      let value;
-      let help;
-      if (setters.has(key)) {
-        let method;
-        [method, help] = setters.get(key);
-        value = method.bind(this)(params.get(key));
-      }
-      if (status) {
-        let placeholder = status.getRootNode().getElementById(key + "-placeholder");
-        if (!placeholder) {
-          let div = document.createElement("div");
-          div.innerHTML = `<code>${key}=<span id=${key}-placeholder>nnn</span></code> : ${help}`;
-          status.appendChild(div);
-          placeholder = status.getRootNode().getElementById(key + "-placeholder");
-        }
-        placeholder.innerText = value;
-      }
-    }
-  }
-
-  setDebug(debug) {
-    return this.debug = parseInt(debug) || 0;
-  }
-
   sync() {
-    let start = performance.now();
-    if (this.debug) console.log("sync");
-
     if (this.childNodes.length == 0) {
       return;
     }
@@ -229,14 +181,12 @@ export class VirtualContent extends HTMLElement {
     let desiredLow = 0 - window.innerHeight * BUFFER;
     let desiredHigh =  window.innerHeight + window.innerHeight * BUFFER;
     let newBounds = findElementBounds(this.children, desiredLow, desiredHigh);
-    if (this.debug) console.log("newBounds", newBounds);
     let newRevealed = newBounds.elementSet();
+
     let toHide = setDifference(this.revealed, newRevealed);
-    if (this.debug) console.log("toHide", toHide);
     toHide.forEach(e => this.hide(e));
 
     let toReveal = setDifference(newRevealed, this.revealed);
-    if (this.debug) console.log("toReveal", toReveal);
     toReveal.forEach(e => this.reveal(e));
 
     // Now we have revealed what we hope will fill the screen. If we
@@ -244,56 +194,7 @@ export class VirtualContent extends HTMLElement {
     // verify whether we have revealed the right amount.
     if (toHide.size > 0 || toReveal.size > 0) {
       this.scheduleUpdate();
-      // We had to make an adjustment, so count this frame.
-      this.framesOfSync++;
-    } else {
-      // We're finished making adjustments, reset the counter.
-      if (this.debug) console.log("framesOfSync", this.framesOfSync);
-      this.framesOfSync = 0;
     }
-
-    if (this.debug) console.log("revealCount", this.revealCount());
-
-    let end = performance.now();
-    if (this.debug) console.log("sync took: " + (end - start));
-  }
-
-  logInfo() {
-    console.log("revealCount", this.revealCount());
-    let bad = this.findBadLocks();
-    if (bad.length > 0) {
-      console.log("Bad locks", bad);
-    } else {
-      console.log("No bad locks");
-    }
-  }
-
-  findBadLocks() {
-    let bad = [];
-    this.getBoundingClientRect();
-    for (const element of this.children) {
-      let locked = element.displayLock.locked;
-      let revealed = this.revealed.has(element);
-      if (locked == revealed) {
-        bad.push([element, locked, revealed]);
-      }
-    }
-    return bad;
-  }
-
-  revealCount() {
-    if (this.debug) {
-      let count = 0;
-      for (const element of this.children) {
-        if (this.revealed.has(element)) {
-          count++;
-        }
-      }
-      if (count != this.revealed.size) {
-        throw "count != this.revealed: " + count + ", " + this.revealed.size;
-      }
-    }
-    return this.revealed.size;
   }
 
   measureRevealed() {
