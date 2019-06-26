@@ -264,7 +264,7 @@ export class VirtualContent extends HTMLElement {
     }
 
     // Mutates newRevealed, so we do this last.
-    this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+    this.updateIntersectionObservers(newRevealedBounds);
 
 
     if (this.debug) console.log("revealCount", this.revealCount());
@@ -307,26 +307,15 @@ export class VirtualContent extends HTMLElement {
     return result;
   }
 
-  updateIntersectionObservers(bounds, toObserve) {
-    for (const element of [bounds.lowElement.previousElementSibling, bounds.highElement.nextElementSibling]) {
-      if (element) {
-        toObserve.add(element);
-      }
-    }
-    let toUnobserve = [];
-    for (const element of this.observed) {
-      if (toObserve.has(element)) {
-        toObserve.delete(element);
-      } else {
-        toUnobserve.push(element);
-      }
-    }
-    for (const element of toUnobserve) {
+  updateIntersectionObservers(bounds) {
+    let toObserve = bounds.elementSet();
+    for (const element of this.setDifference(this.observed, toObserve)) {
       this.unobserve(element);
     }
-    for (const element of toObserve) {
+    for (const element of this.setDifference(toObserve, this.observed)) {
       this.observe(element);
     }
+    this.observed = toObserve;
   }
 
   revealCount() {
