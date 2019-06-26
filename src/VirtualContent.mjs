@@ -53,6 +53,42 @@ class ElementBounds {
   }
 }
 
+function findElementIndex(elements, offset) {
+  let low = 0;
+  let high = elements.length - 1;
+  let i;
+  while (true) {
+    if (low === high) {
+      return low;
+    }
+    i = Math.floor((low + high)/2);
+    let element = elements[i];
+    let rect = element.getBoundingClientRect();
+    if (rect.top > offset) {
+      // The entire rect is > offset.
+      high = Math.max(i - 1, low);
+    } else if (rect.bottom < offset) {
+      // The entire rect is < offset.
+      low = Math.min(i + 1, high);
+    } else {
+      // The rect contains offset.
+      break;
+    }
+  }
+  return i;
+}
+
+function findElement(elements, offset) {
+  return elements[findElementIndex(elements, offset)];
+}
+
+function findElementBounds(elements, low, high) {
+  let lowElement = findElement(elements, low);
+  let highElement = findElement(elements, high);
+
+  return new ElementBounds(lowElement, highElement);
+}
+
 class SizeManager {
   sizes = new WeakMap();
   sizeValid = new WeakMap();
@@ -192,7 +228,7 @@ export class VirtualContent extends HTMLElement {
     this.measureRevealed();
     let desiredLow = 0 - window.innerHeight * BUFFER;
     let desiredHigh =  window.innerHeight + window.innerHeight * BUFFER;
-    let newBounds = this.findElementBounds(desiredLow, desiredHigh);
+    let newBounds = findElementBounds(this.children, desiredLow, desiredHigh);
     if (this.debug) console.log("newBounds", newBounds);
     let newRevealed = newBounds.elementSet();
     let toHide = setDifference(this.revealed, newRevealed);
@@ -258,42 +294,6 @@ export class VirtualContent extends HTMLElement {
       }
     }
     return this.revealed.size;
-  }
-
-  findElementIndex(offset) {
-    let low = 0;
-    let high = this.children.length - 1;
-    let i;
-    while (true) {
-      if (low === high) {
-        return low;
-      }
-      i = Math.floor((low + high)/2);
-      let element = this.children[i];
-      let rect = element.getBoundingClientRect();
-      if (rect.top > offset) {
-        // The entire rect is > offset.
-        high = Math.max(i - 1, low);
-      } else if (rect.bottom < offset) {
-        // The entire rect is < offset.
-        low = Math.min(i + 1, high);
-      } else {
-        // The rect contains offset.
-        break;
-      }
-    }
-    return i;
-  }
-
-  findElement(offset) {
-    return this.children[this.findElementIndex(offset)];
-  }
-
-  findElementBounds(low, high) {
-    let lowElement = this.findElement(low);
-    let highElement = this.findElement(high);
-
-    return new ElementBounds(lowElement, highElement);
   }
 
   measureRevealed() {
