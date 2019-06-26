@@ -278,16 +278,6 @@ export class VirtualContent extends HTMLElement {
         relevantMutation = true;
         if (node.nodeType === Node.ELEMENT_NODE) {
           this.addElement(node);
-        } else {
-          // Remove non-element children because we can't control their
-          // invisibility state or even prevent them from being rendered using
-          // CSS (they aren't distinctly selectable).
-
-          // These records are not coalesced, so test that the node is actually
-          // a child of this node before removing it.
-          if (node.parentNode === this) {
-            this.removeChild(node);
-          }
         }
       }
     }
