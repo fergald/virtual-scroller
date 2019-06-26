@@ -141,10 +141,7 @@ export class VirtualContent extends HTMLElement {
   measuredCount = 0;
 
   revealed = new Set();
-  revealedDiff = new Map();
   observed = new Set();
-
-  useIntersection = false;
 
   useForcedLayouts = false;
   // If useForcedLayout=false this tracks how many consecutive frames
@@ -189,7 +186,6 @@ export class VirtualContent extends HTMLElement {
     let params = url.searchParams;
     let setters = new Map([
       ["debug", [this.setDebug, "Emit lots of debug info"]],
-      ["useIntersection", [this.setUseIntersection, "Use intersection observers on all elements"]],
       ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
     ]);
 
@@ -218,10 +214,6 @@ export class VirtualContent extends HTMLElement {
     return this.debug = parseInt(debug) || 0;
   }
 
-  setUseIntersection(useIntersection) {
-    return this.useIntersection = parseInt(useIntersection) || 0;
-  }
-
   setUseForcedLayouts(useForcedLayouts) {
     return this.useForcedLayouts = parseInt(useForcedLayouts) || 0;
   }
@@ -234,60 +226,46 @@ export class VirtualContent extends HTMLElement {
       return;
     }
 
-    if (this.useIntersection) {
-      for (const [element, revealed] of this.revealedDiff) {
-        if (revealed) {
-          this.ensureReveal(element);
-        } else {
-          this.ensureHide(element);
-        }
-        // Is this safe?
-        this.revealedDiff.delete(element);
-      }
-      if (this.revealedDiff.length) {
-        throw "Still intersecting: " + this.revealedDiff.length;
-      }
+    let windowBounds = new Range(0, window.innerHeight);
+    let newRevealedBounds;
+    if (this.useForcedLayouts) {
+      newRevealedBounds = this.revealBounds(windowBounds);
+      if (this.debug) console.log("newRevealedBounds", newRevealedBounds);
+      newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
+      this.measureBounds(newRevealedBounds);
     } else {
-      let windowBounds = new Range(0, window.innerHeight);
-      let newRevealedBounds;
-      if (this.useForcedLayouts) {
-        newRevealedBounds = this.revealBounds(windowBounds);
-        if (this.debug) console.log("newRevealedBounds", newRevealedBounds);
-        newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
-        this.measureBounds(newRevealedBounds);
-      } else {
-        // Grab sizes of all revealed elements for the record.
-        this.measureRevealed();
-        newRevealedBounds = this.revealHopefulBounds(windowBounds);
-      }
-      let newRevealed = newRevealedBounds.elementSet();
-      if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
-      let toHide = this.setDifference(this.revealed, newRevealed);
-      if (this.debug) console.log("toHide", toHide);
-      toHide.forEach(e => this.requestHide(e));
-
-      if (!this.useForcedLayouts) {
-        let toReveal = this.setDifference(newRevealed, this.revealed);
-        if (this.debug) console.log("toReveal", toReveal);
-        toReveal.forEach(e => this.requestReveal(e));
-        // If we are being lazy and not forcing layouts, we need to
-        // check again in the next frame to see if we have more work
-        // to do.
-        if (toHide.size > 0 || toReveal.size > 0) {
-          this.scheduleUpdate();
-          // We had to make an adjustment, so count this frame.
-          this.framesOfSync++;
-        } else {
-          // We're finished making adjustments, so log the final
-          // count.
-          console.log("framesOfSync", this.framesOfSync);
-          this.framesOfSync = 0;
-        }
-      }
-
-      // Mutates newRevealed, so we do this last.
-      this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+      // Grab sizes of all revealed elements for the record.
+      this.measureRevealed();
+      newRevealedBounds = this.revealHopefulBounds(windowBounds);
     }
+    let newRevealed = newRevealedBounds.elementSet();
+    if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
+    let toHide = this.setDifference(this.revealed, newRevealed);
+    if (this.debug) console.log("toHide", toHide);
+    toHide.forEach(e => this.requestHide(e));
+
+    if (!this.useForcedLayouts) {
+      let toReveal = this.setDifference(newRevealed, this.revealed);
+      if (this.debug) console.log("toReveal", toReveal);
+      toReveal.forEach(e => this.requestReveal(e));
+      // If we are being lazy and not forcing layouts, we need to
+      // check again in the next frame to see if we have more work
+      // to do.
+      if (toHide.size > 0 || toReveal.size > 0) {
+        this.scheduleUpdate();
+        // We had to make an adjustment, so count this frame.
+        this.framesOfSync++;
+      } else {
+        // We're finished making adjustments, so log the final
+        // count.
+        console.log("framesOfSync", this.framesOfSync);
+        this.framesOfSync = 0;
+      }
+    }
+
+    // Mutates newRevealed, so we do this last.
+    this.updateIntersectionObservers(newRevealedBounds, newRevealed);
+
 
     if (this.debug) console.log("revealCount", this.revealCount());
 
@@ -539,17 +517,6 @@ export class VirtualContent extends HTMLElement {
   }
 
   intersectionObserverCallback(entries) {
-    // TODO(fergal): Once the scroller goes off screen it should stop
-    // updating and only start updating once it's back on-screen
-    // again.
-    if (this.useIntersection) {
-      for (const entry of entries) {
-        if (entry.target == this) {
-          continue;
-        }
-        this.revealedDiff.set(entry.target, entry.intersectionRatio > 0);
-      }
-    }
     this.scheduleUpdate();
   }
 
@@ -570,9 +537,6 @@ export class VirtualContent extends HTMLElement {
     if (this.observed.has(element)) {
       this.unobserve(element);
     }
-    if (this.useIntersection) {
-      delete this.intersection[element];
-    }
     this.hide(element);
     this.sizes.delete(element);
     this.sizeValid.delete(element);
@@ -584,9 +548,6 @@ export class VirtualContent extends HTMLElement {
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
     this.revealed.add(element);
-    if (this.useIntersection) {
-      this.observe(element);
-    }
     return this.requestHide(element);
   }
 
