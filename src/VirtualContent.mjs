@@ -38,6 +38,17 @@ function nearestScrollingAncestor(node) {
   return null;
 }
 
+// a - b
+function setDifference(a, b) {
+  let result = new Set();
+  for (const element of a) {
+    if (!b.has(element)) {
+      result.add(element)
+    }
+  }
+  return result;
+}
+
 // Represents a range of pixels, from |low| to |high|. |lowElement| if present
 // is an element having lowest edge equal to |low| and |highElement| if present
 // is an element having highest edge equal to |high|.
@@ -264,11 +275,11 @@ export class VirtualContent extends HTMLElement {
     newRevealedBounds = this.revealHopefulBounds(desiredBounds);
     let newRevealed = newRevealedBounds.elementSet();
     if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
-    let toHide = this.setDifference(this.revealed, newRevealed);
+    let toHide = setDifference(this.revealed, newRevealed);
     if (this.debug) console.log("toHide", toHide);
     toHide.forEach(e => this.hide(e));
 
-    let toReveal = this.setDifference(newRevealed, this.revealed);
+    let toReveal = setDifference(newRevealed, this.revealed);
     if (this.debug) console.log("toReveal", toReveal);
     toReveal.forEach(e => this.reveal(e));
 
@@ -312,17 +323,6 @@ export class VirtualContent extends HTMLElement {
       }
     }
     return bad;
-  }
-
-  // a - b
-  setDifference(a, b) {
-    let result = new Set();
-    for (const element of a) {
-      if (!b.has(element)) {
-        result.add(element)
-      }
-    }
-    return result;
   }
 
   revealCount() {
