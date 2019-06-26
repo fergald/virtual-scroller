@@ -1,5 +1,6 @@
 const BUFFER = 0.2;
 const DEFAULT_HEIGHT_ESTIMATE = 100;
+const LOCKED_WIDTH = 1;
 
 const TEMPLATE = `
 <style>
@@ -60,7 +61,7 @@ function findElementIndex(elements, offset) {
     if (low === high) {
       return low;
     }
-    i = Math.floor((low + high) / 2);
+    i = Math.floor((low + high) / 2); // eslint-disable-line no-magic-numbers
     const element = elements[i];
     const rect = element.getBoundingClientRect();
     if (rect.top > offset) {
@@ -183,7 +184,7 @@ export class VirtualContent extends HTMLElement {
   }
 
   sync() {
-    if (this.childNodes.length == 0) {
+    if (this.childNodes.length === 0) {
       return;
     }
 
@@ -233,7 +234,7 @@ export class VirtualContent extends HTMLElement {
     element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
-      size: [10, this.sizeManager.getHopefulSize(element)],
+      size: [LOCKED_WIDTH, this.sizeManager.getHopefulSize(element)],
     }).then(null, reason => {
       console.log('Rejected: ', reason.message);
     });
