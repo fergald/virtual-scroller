@@ -38,15 +38,6 @@ function nearestScrollingAncestor(node) {
   return null;
 }
 
-// Represents an offset for the scroller. Can be either an pixel
-// offset or an element.
-class Offset {
-  constructor(offset, element) {
-    this.offset = offset;
-    this.element = element;
-  }
-}
-
 // Represents a range of pixels, from |low| to |high|. |lowElement| if present
 // is an element having lowest edge equal to |low| and |highElement| if present
 // is an element having highest edge equal to |high|.
