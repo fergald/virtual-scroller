@@ -21,23 +21,6 @@ const TEMPLATE = `
 <slot></slot>
 `;
 
-function composedTreeParent(node) {
-  return node.assignedSlot || node.host || node.parentNode;
-}
-
-function nearestScrollingAncestor(node) {
-  // TODO(fergal): This returns the HTML element but in that case we
-  // need the document.
-  for (node = composedTreeParent(node); node !== null;
-       node = composedTreeParent(node)) {
-    if (node.nodeType === Node.ELEMENT_NODE &&
-        node.scrollHeight > node.clientHeight) {
-      return node;
-    }
-  }
-  return null;
-}
-
 // a - b
 function setDifference(a, b) {
   let result = new Set();
@@ -307,7 +290,7 @@ export class VirtualContent extends HTMLElement {
     return this.children[this.findElementIndex(offset)];
   }
 
-findElementBounds(low, high) {
+  findElementBounds(low, high) {
     let lowElement = this.findElement(low);
     let highElement = this.findElement(high);
 
