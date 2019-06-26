@@ -258,7 +258,6 @@ export class VirtualContent extends HTMLElement {
       } else {
         // Grab sizes of all revealed elements for the record.
         this.measureRevealed();
-        let windowBounds = new Range(0, window.innerHeight);
         newRevealedBounds = this.revealHopefulBounds(windowBounds);
       }
       let newRevealed = newRevealedBounds.elementSet();
