@@ -187,7 +187,6 @@ export class VirtualContent extends HTMLElement {
   thisResizeObserver;
 
   revealed = new Set();
-  observed = new Set();
 
   // This tracks how many consecutive frames of layout we have done
   // (this number can be high because we had to do a lot of relayout
