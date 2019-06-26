@@ -180,6 +180,7 @@ class SizeManager {
 export class VirtualContent extends HTMLElement {
   sizeManager = new SizeManager();
   updateRAFToken;
+
   intersectionObserver;
   mutationObserver;
   elementResizeObserver;
@@ -203,7 +204,6 @@ export class VirtualContent extends HTMLElement {
 
     this.intersectionObserver =
       new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
-    this.intersectionObserver.observe(this);
 
     this.thisResizeObserver = new ResizeObserver(() => {this.scheduleUpdate()});
     this.thisResizeObserver.observe(this);
@@ -295,10 +295,6 @@ export class VirtualContent extends HTMLElement {
       this.framesOfSync = 0;
     }
 
-    // Mutates newRevealed, so we do this last.
-    this.updateIntersectionObservers(newRevealedBounds);
-
-
     if (this.debug) console.log("revealCount", this.revealCount());
 
     let end = performance.now();
@@ -339,22 +335,11 @@ export class VirtualContent extends HTMLElement {
     return result;
   }
 
-  updateIntersectionObservers(bounds) {
-    let toObserve = bounds.elementSet();
-    for (const element of this.setDifference(this.observed, toObserve)) {
-      this.unobserve(element);
-    }
-    for (const element of this.setDifference(toObserve, this.observed)) {
-      this.observe(element);
-    }
-    this.observed = toObserve;
-  }
-
   revealCount() {
     if (this.debug) {
       let count = 0;
       for (const element of this.children) {
-        if (this.getRevealed(element)) {
+        if (this.revealed.has(element)) {
           count++;
         }
       }
@@ -407,18 +392,20 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  getRevealed(element) {
-    return this.revealed.has(element);
-  }
-
   reveal(element) {
     this.revealed.add(element);
+    this.intersectionObserver.observe(element);
     this.elementResizeObserver.observe(element);
+    this.unlock(element);
+  }
+
+  unlock(element) {
     element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
   }
 
   hide(element) {
     this.revealed.delete(element);
+    this.intersectionObserver.unobserve(element);
     this.elementResizeObserver.unobserve(element);
     element.displayLock.acquire({
       timeout: Infinity,
@@ -457,25 +444,17 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
-  observe(element) {
-    this.intersectionObserver.observe(element);
-    this.observed.add(element);
-  }
-
-  unobserve(element) {
-    this.intersectionObserver.unobserve(element);
-    this.observed.delete(element);
-  }
-
   removeElement(element) {
-    // Removed children should have be made visible again. We stop observing
-    // them for resize so we should discard any size info we have to them as it
-    // may become incorrect.
-    if (this.observed.has(element)) {
-      this.unobserve(element);
-    }
-    this.hide(element);
+    // Removed children should have be made visible again. We should
+    // stop observing them and discard any size info we have to them
+    // as it may become incorrect.
+    this.revealed.delete(element);
+    this.intersectionObserver.unobserve(element);
+    this.elementResizeObserver.unobserve(element);
     this.sizeManager.remove(element);
+    if (element.displayLock.locked) {
+      this.unlock(element);
+    }
   }
 
   addElement(element) {
@@ -483,11 +462,12 @@ export class VirtualContent extends HTMLElement {
     // invisible at this MutationObserver timing, so that there is no
     // frame where the browser is asked to render all of the children
     // (which could be a lot).
-    this.revealed.add(element);
-    return this.requestHide(element);
+    return this.hide(element);
   }
 
   mutationObserverCallback(records) {
+    // TODO: Does a move of an element show up as a remove and
+    // add?). Need to cope with that.
     let relevantMutation = false;
     for (const record of records) {
       for (const node of record.removedNodes) {
