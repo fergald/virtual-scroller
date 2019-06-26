@@ -135,7 +135,7 @@ export class VirtualContent extends HTMLElement {
   sizeManager = new SizeManager();
   updateRAFToken;
 
-  intersectionObserver;
+  elementIntersectionObserver;
   mutationObserver;
   elementResizeObserver;
   thisResizeObserver;
@@ -148,7 +148,7 @@ export class VirtualContent extends HTMLElement {
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
 
-    this.intersectionObserver = new IntersectionObserver(() => {
+    this.elementIntersectionObserver = new IntersectionObserver(() => {
       this.scheduleUpdate();
     });
 
@@ -215,7 +215,7 @@ export class VirtualContent extends HTMLElement {
 
   reveal(element) {
     this.revealed.add(element);
-    this.intersectionObserver.observe(element);
+    this.elementIntersectionObserver.observe(element);
     this.elementResizeObserver.observe(element);
     this.unlock(element);
   }
@@ -228,7 +228,7 @@ export class VirtualContent extends HTMLElement {
 
   hide(element) {
     this.revealed.delete(element);
-    this.intersectionObserver.unobserve(element);
+    this.elementIntersectionObserver.unobserve(element);
     this.elementResizeObserver.unobserve(element);
     element.displayLock.acquire({
       timeout: Infinity,
@@ -240,28 +240,13 @@ export class VirtualContent extends HTMLElement {
     this.sizeManager.invalidate(element);
   }
 
-  remove(element) {
-    // Removed children should have be made visible again. We should
-    // stop observing them and discard any size info we have for them
-    // as it may have become incorrect.
-    this.revealed.delete(element);
-    this.intersectionObserver.unobserve(element);
-    this.elementResizeObserver.unobserve(element);
-    this.sizeManager.remove(element);
-    if (element.displayLock.locked) {
-      this.unlock(element);
-    }
-  }
-
-  add(element) {
-    // Added children should be invisible initially. We want to make them
-    // invisible at this MutationObserver timing, so that there is no
-    // frame where the browser is asked to render all of the children
-    // (which could be a lot).
-    return this.hide(element);
-  }
-
   mutationObserverCallback(records) {
+    // It's unclear if we can support children which are not
+    // elements. We cannot control their visibility using display
+    // locking but we can just leave them alone.
+    //
+    // Relevant mutations are any additions or removals, including
+    // non-element as this may impact element bounds.
     let relevantMutation = false;
     const toRemove = new Set();
     for (const record of records) {
@@ -287,10 +272,23 @@ export class VirtualContent extends HTMLElement {
       }
     }
     for (const node of toRemove) {
-      this.remove(node);
+      // Removed children should be made visible again. We should stop
+      // observing them and discard any size info we have for them as it
+      // may have become incorrect.
+      this.revealed.delete(node);
+      if (node.displayLock.locked) {
+        this.unlock(node);
+      }
+      this.elementIntersectionObserver.unobserve(node);
+      this.elementResizeObserver.unobserve(node);
+      this.sizeManager.remove(node);
     }
     for (const node of toAdd) {
-      this.add(node);
+      // Added children should be invisible initially. We want to make them
+      // invisible at this MutationObserver timing, so that there is no
+      // frame where the browser is asked to render all of the children
+      // (which could be a lot).
+      this.hide(node);
     }
 
     if (relevantMutation) {
