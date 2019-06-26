@@ -182,7 +182,8 @@ export class VirtualContent extends HTMLElement {
   updateRAFToken;
   intersectionObserver;
   mutationObserver;
-  resizeObserver;
+  elementResizeObserver;
+  thisResizeObserver;
 
   revealed = new Set();
   observed = new Set();
@@ -202,9 +203,12 @@ export class VirtualContent extends HTMLElement {
 
     this.intersectionObserver =
       new IntersectionObserver(entries => {this.intersectionObserverCallback(entries)});
-
-    this.resizeObserver = new ResizeObserver(entries => {this.resizeObserverCallback(entries)});
     this.intersectionObserver.observe(this);
+
+    this.thisResizeObserver = new ResizeObserver(() => {this.scheduleUpdate()});
+    this.thisResizeObserver.observe(this);
+
+    this.elementResizeObserver = new ResizeObserver(entries => {this.elementResizeObserverCallback(entries)});
 
     this.mutationObserver = new MutationObserver((records) => {this.mutationObserverCallback(records)});
     this.mutationObserver.observe(this, {childList: true});
@@ -449,13 +453,13 @@ export class VirtualContent extends HTMLElement {
 
   reveal(element) {
     this.revealed.add(element);
-    this.resizeObserver.observe(element);
+    this.elementResizeObserver.observe(element);
     element.displayLock.commit().then(null, reason => {console.log("Rejected: ", reason)});
   }
 
   hide(element) {
     this.revealed.delete(element);
-    this.resizeObserver.unobserve(element);
+    this.elementResizeObserver.unobserve(element);
     element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
@@ -568,7 +572,7 @@ export class VirtualContent extends HTMLElement {
     }
   }
 
-  resizeObserverCallback(entries) {
+  elementResizeObserverCallback(entries) {
     for (const entry of entries) {
       this.sizeManager.invalidate(entry.target);
     }
