@@ -321,13 +321,19 @@ export class VirtualContent extends HTMLElement {
     let low = 0;
     let high = this.children.length - 1;
     let i;
-    while (low < high) {
+    while (true) {
       i = Math.floor((low + high)/2);
+      if (low === high) {
+        break;
+      }
+      if (i < 0 || i >= this.children.length) {
+        return null;
+      }
       let element = this.children[i];
       let rect = element.getBoundingClientRect();
-      if (rect.bottom > offset) {
+      if (rect.bottom >= offset) {
         high = i - 1;
-      } else if (rect.top < offset) {
+      } else if (rect.top <= offset) {
         low = i + 1;
       } else {
         break;
@@ -337,8 +343,8 @@ export class VirtualContent extends HTMLElement {
   }
 
   revealHopefulBounds(bounds) {
-    let lowElement = this.findElement(bounds.low);
-    let highElement = this.findElement(bounds.high);
+    let lowElement = this.findElement(bounds.low) || this.children[0];
+    let highElement = this.findElement(bounds.high) || this.children[this.children.length - 1];
 
     return this.range(lowElement, highElement);
   }
