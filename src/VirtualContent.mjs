@@ -401,46 +401,6 @@ export class VirtualContent extends HTMLElement {
     return this.range(lowElement, highElement);
   }
 
-  revealBounds(bounds) {
-    let previous;
-    while (true) {
-      let reveal = this.revealHopefulBounds(bounds);
-      if (previous && reveal.sameEnds(previous)) {
-        return reveal;
-      }
-      previous = reveal;
-      this.ensureRevealed(reveal);
-    }
-  }
-
-  ensureRevealed(bounds) {
-    bounds.doToAll(e => {
-      if (!this.getRevealed(e)) {
-        this.reveal(e);
-      }
-    });
-  }
-
-  trimRevealed(bounds, limit) {
-    let toHide = [];
-    let low, high;
-    bounds.doToAll(e => {
-      let rect = e.getBoundingClientRect();
-      if (rect.bottom < limit.low || rect.top > limit.high) {
-        toHide.push(e);
-      } else {
-        if (!low) {
-          low = e;
-        }
-        high = e;
-      }
-    });
-    for (const e of toHide) {
-      this.requestHide(e);
-    }
-    return this.range(low, high);
-  }
-
   measureRevealed() {
     for (const element of this.revealed) {
       this.sizeManager.ensureValidSize(element);
@@ -468,12 +428,6 @@ export class VirtualContent extends HTMLElement {
     this.sizeManager.invalidate(element);
   }
 
-  ensureReveal(element) {
-    if (!this.getRevealed(element)) {
-      this.reveal(element);
-    }
-  }
-
   requestReveal(element) {
     if (this.getRevealed(element)) {
       if (DEBUG) {
@@ -481,12 +435,6 @@ export class VirtualContent extends HTMLElement {
       }
     } else {
       this.reveal(element);
-    }
-  }
-
-  ensureHide(element) {
-    if (this.getRevealed(element)) {
-      this.hide(element);
     }
   }
 
