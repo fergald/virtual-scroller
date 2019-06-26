@@ -143,11 +143,9 @@ export class VirtualContent extends HTMLElement {
   revealed = new Set();
   observed = new Set();
 
-  useForcedLayouts = false;
-  // If useForcedLayout=false this tracks how many consecutive frames
-  // of layout we have done (this number can be high because we had to
-  // do a lot of relayout or just because the page or scroll-position
-  // was changing a lot).
+  // This tracks how many consecutive frames of layout we have done
+  // (this number can be high because we had to do a lot of relayout
+  // or just because the page or scroll-position was changing a lot).
   framesOfSync = 0;
 
   debug = DEBUG;
@@ -186,7 +184,6 @@ export class VirtualContent extends HTMLElement {
     let params = url.searchParams;
     let setters = new Map([
       ["debug", [this.setDebug, "Emit lots of debug info"]],
-      ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
     ]);
 
     for (let key of setters.keys()) {
@@ -214,10 +211,6 @@ export class VirtualContent extends HTMLElement {
     return this.debug = parseInt(debug) || 0;
   }
 
-  setUseForcedLayouts(useForcedLayouts) {
-    return this.useForcedLayouts = parseInt(useForcedLayouts) || 0;
-  }
-
   sync() {
     let start = performance.now();
     if (this.debug) console.log("sync");
@@ -228,39 +221,30 @@ export class VirtualContent extends HTMLElement {
 
     let windowBounds = new Range(0, window.innerHeight);
     let newRevealedBounds;
-    if (this.useForcedLayouts) {
-      newRevealedBounds = this.revealBounds(windowBounds);
-      if (this.debug) console.log("newRevealedBounds", newRevealedBounds);
-      newRevealedBounds = this.trimRevealed(newRevealedBounds, windowBounds);
-      this.measureBounds(newRevealedBounds);
-    } else {
-      // Grab sizes of all revealed elements for the record.
-      this.measureRevealed();
-      newRevealedBounds = this.revealHopefulBounds(windowBounds);
-    }
+    // Grab sizes of all revealed elements for the record.
+    this.measureRevealed();
+    newRevealedBounds = this.revealHopefulBounds(windowBounds);
     let newRevealed = newRevealedBounds.elementSet();
     if (this.debug) console.log("newRevealedBounds after trim", newRevealedBounds);
     let toHide = this.setDifference(this.revealed, newRevealed);
     if (this.debug) console.log("toHide", toHide);
     toHide.forEach(e => this.requestHide(e));
 
-    if (!this.useForcedLayouts) {
-      let toReveal = this.setDifference(newRevealed, this.revealed);
-      if (this.debug) console.log("toReveal", toReveal);
-      toReveal.forEach(e => this.requestReveal(e));
-      // If we are being lazy and not forcing layouts, we need to
-      // check again in the next frame to see if we have more work
-      // to do.
-      if (toHide.size > 0 || toReveal.size > 0) {
-        this.scheduleUpdate();
-        // We had to make an adjustment, so count this frame.
-        this.framesOfSync++;
-      } else {
-        // We're finished making adjustments, so log the final
-        // count.
-        console.log("framesOfSync", this.framesOfSync);
-        this.framesOfSync = 0;
-      }
+    let toReveal = this.setDifference(newRevealed, this.revealed);
+    if (this.debug) console.log("toReveal", toReveal);
+    toReveal.forEach(e => this.requestReveal(e));
+    // If we are being lazy and not forcing layouts, we need to
+    // check again in the next frame to see if we have more work
+    // to do.
+    if (toHide.size > 0 || toReveal.size > 0) {
+      this.scheduleUpdate();
+      // We had to make an adjustment, so count this frame.
+      this.framesOfSync++;
+    } else {
+      // We're finished making adjustments, so log the final
+      // count.
+      console.log("framesOfSync", this.framesOfSync);
+      this.framesOfSync = 0;
     }
 
     // Mutates newRevealed, so we do this last.

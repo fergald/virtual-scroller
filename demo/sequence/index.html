@@ -14,7 +14,6 @@
     let words = Words.words(wordCount.value);
 
     vc = document.createElement("virtual-content");
-    vc.setUseForcedLayouts(useForcedLayouts.checked, contentDiv);
     contentDiv.innerHTML = "";
     contentDiv.append(vc);
     for (const div of Words.divs(elementCount.value, words)) {
@@ -40,13 +39,6 @@
   }
   window.logInfo = logInfo;
 
-  function onChangeUseForcedLayouts() {
-    if (vc) {
-      vc.setUseForcedLayouts(useForcedLayouts.checked, contentDiv);
-    }
-  }
-  window.onChangeUseForcedLayouts = onChangeUseForcedLayouts;
-
 //  populate();
 //  customElements.whenDefined('virtual-content').then(async () => {populate()});
 </script>
@@ -71,7 +63,6 @@
 <div>
   Element Count: <input id=elementCount value=1000><br>
   Word Count: <input id=wordCount value=100><br>
-  Use forced layouts: <input id=useForcedLayouts type=checkbox onchange="onChangeUseForcedLayouts()" checked><br>
   <br>
   <input type=button onClick="populate()" value="Go" id=goButton>
   <input type=button onClick="jump()" value="Jump" id=jumpButton>
