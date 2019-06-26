@@ -12,5 +12,9 @@
     "format": "find . -name '*.mjs' | grep -v node_modules | xargs clang-format --style=file -i"
   },
   "repository": "valdrinkoshi/virtual-scroller",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "babel-eslint": "^10.0.2",
+    "eslint": "^6.0.1"
+  }
 }
