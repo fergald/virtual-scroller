@@ -129,16 +129,60 @@ class Range {
   }
 }
 
-export class VirtualContent extends HTMLElement {
+class SizeManager {
   sizes = new WeakMap();
   sizeValid = new WeakMap();
+
+  totalMeasuredSize = 0;
+  measuredCount = 0;
+
+  ensureValidSize(element) {
+    if (this.sizeValid.get(element)) {
+      if (this.debug) {
+        if (this.sizes.has(element) === undefined) {
+          throw "No size for valid size: " + element;
+        }
+      }
+      return;
+    }
+    let oldSize = this.sizes.get(element);
+    if (oldSize === undefined) {
+      oldSize = 0;
+      this.measuredCount++;
+    }
+    let newSize = element.offsetHeight;
+    this.totalMeasuredSize += newSize - oldSize;
+    this.sizes.set(element, newSize);
+    this.sizeValid.set(element, true);
+  }
+
+  invalidate(element) {
+    this.sizeValid.set(element, false);
+  }
+
+  getHopefulSize(element) {
+    let size = this.sizes.get(element);
+    return size === undefined ? this.getAverageSize() : size;
+  }
+
+  getAverageSize() {
+    return this.measuredCount > 0 ?
+      this.totalMeasuredSize / this.measuredCount :
+      DEFAULT_HEIGHT_ESTIMATE;
+  }
+
+  remove(element) {
+    this.sizes.delete(element);
+    this.sizeValid.delete(element);
+  }
+}
+
+export class VirtualContent extends HTMLElement {
+  sizeManager = new SizeManager();
   updateRAFToken;
   intersectionObserver;
   mutationObserver;
   resizeObserver;
-
-  totalMeasuredSize = 0;
-  measuredCount = 0;
 
   revealed = new Set();
   observed = new Set();
@@ -393,40 +437,9 @@ export class VirtualContent extends HTMLElement {
     return this.range(low, high);
   }
 
-  ensureValidSize(element) {
-    if (this.sizeValid.get(element)) {
-      if (this.debug) {
-        if (this.sizes.has(element) === undefined) {
-          throw "No size for valid size: " + element;
-        }
-      }
-      return;
-    }
-    if (!this.getRevealed(element)) {
-      throw "Called ensureValidSize on locked element " + element;
-    }
-    let oldSize = this.sizes.get(element);
-    if (oldSize === undefined) {
-      oldSize = 0;
-      this.measuredCount++;
-    }
-    let newSize = element.offsetHeight;
-    this.totalMeasuredSize += newSize - oldSize;
-    this.sizes.set(element, newSize);
-    this.sizeValid.set(element, true);
-  }
-
-  invalidateSize(element) {
-    this.sizeValid.set(element, false);
-  }
-
-  measureBounds(bounds) {
-    bounds.doToAll(element => {this.ensureValidSize(element)});
-  }
-
   measureRevealed() {
     for (const element of this.revealed) {
-      this.ensureValidSize(element);
+      this.sizeManager.ensureValidSize(element);
     }
   }
 
@@ -446,9 +459,9 @@ export class VirtualContent extends HTMLElement {
     element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
-      size: [10, this.getHopefulSize(element)],
+      size: [10, this.sizeManager.getHopefulSize(element)],
     }).then(null, reason => {console.log("Rejected: ", reason.message)});
-    this.invalidateSize(element);
+    this.sizeManager.invalidate(element);
   }
 
   ensureReveal(element) {
@@ -488,17 +501,6 @@ export class VirtualContent extends HTMLElement {
                      lowElement, highElement);
   }
 
-  getHopefulSize(element) {
-    let size = this.sizes.get(element);
-    return size === undefined ? this.getAverageSize() : size;
-  }
-
-  getAverageSize() {
-    return this.measuredCount > 0 ?
-      this.totalMeasuredSize / this.measuredCount :
-      DEFAULT_HEIGHT_ESTIMATE;
-  }
-
   intersectionObserverCallback(entries) {
     this.scheduleUpdate();
   }
@@ -521,8 +523,7 @@ export class VirtualContent extends HTMLElement {
       this.unobserve(element);
     }
     this.hide(element);
-    this.sizes.delete(element);
-    this.sizeValid.delete(element);
+    this.sizeManager.remove(element);
   }
 
   addElement(element) {
@@ -569,7 +570,7 @@ export class VirtualContent extends HTMLElement {
 
   resizeObserverCallback(entries) {
     for (const entry of entries) {
-      this.invalidateSize(entry.target);
+      this.sizeManager.invalidate(entry.target);
     }
     this.scheduleUpdate();
   }
