@@ -289,9 +289,8 @@ export class VirtualContent extends HTMLElement {
       // We had to make an adjustment, so count this frame.
       this.framesOfSync++;
     } else {
-      // We're finished making adjustments, so log the final
-      // count.
-      console.log("framesOfSync", this.framesOfSync);
+      // We're finished making adjustments, reset the counter.
+      if (this.debug) console.log("framesOfSync", this.framesOfSync);
       this.framesOfSync = 0;
     }
 
