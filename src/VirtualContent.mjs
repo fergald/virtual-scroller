@@ -91,15 +91,22 @@ class SizeManager {
   }
 }
 
-// DO NOT SUBMIT Factoring this out from VirtualContent makes it easy
-// to hide all of the internals but it
+// DO NOT SUBMIT All of this could actually live in the VirtualContent
+// class but it would be a lot of boilerplate to hide all of the
+// methods etc. This is easier and does actually provide a small bit
+// of separation of logic. Is it OK?
 
 // Manages the visibility (locked/unlocked state) of a list of
-// elements.
+// elements. This list of elements is assumed to be in vertical
+// display order (e.g. from lowest to highest offset).
+//
+// It uses resize and intersection observers on all of the visible
+// elements to ensure that changes that impact visibility cause us to
+// recalulate things (e.g. scrolling, restyling).
 class VisibilityManager {
   #sizeManager = new SizeManager();
   #elements;
-  #updateRAFToken;
+  #syncRAFToken;
 
   #elementIntersectionObserver;
   #elementResizeObserver;
@@ -110,22 +117,29 @@ class VisibilityManager {
     this.#elements = elements;
 
     this.#elementIntersectionObserver = new IntersectionObserver(() => {
-      this.scheduleUpdate();
+      this.scheduleSync();
     });
 
-
-    this.#elementResizeObserver = new ResizeObserver(entries => {
-      this.elementResizeObserverCallback(entries);
+    this.#elementResizeObserver = new ResizeObserver(() => {
+      this.scheduleSync();
     });
 
     for (const element of this.#elements) {
       this.didAdd(element);
     }
-    this.scheduleUpdate();
+    this.scheduleSync();
   }
 
-  // Attempts to unlock a range of elements that are visible on-screen.
-  // This causes one forced layout.
+  // Attempts to unlock a range of elements suitable for the current
+  // viewport.
+  //
+  // This causes one forced layout. The forced layout occurs at the
+  // start. We then use the laid out coordinates (which are based on a
+  // mix of real sizes for unlocked elements and the estimated sizes
+  // at the time of locking for locked elements) to calculate a set of
+  // elements which should be revealed and we use unlock/lock to move
+  // to this new set of revealed elements. We will check in the next
+  // frame whether we got it correct.
   sync() {
     if (this.#elements.length === 0) {
       return;
@@ -155,10 +169,13 @@ class VisibilityManager {
     // come back next frame and try to make it better. We know we can
     // stop when we didn't hide or reveal any elements.
     if (toHide.size > 0 || toReveal.size > 0) {
-      this.scheduleUpdate();
+      this.scheduleSync();
     }
   }
 
+  // Returns an ElementBounds object who's low element contains or is
+  // lower than |low| (or the lowest element possible). Similarly for
+  // high.
   findElementBounds(low, high) {
     const lowElement = FindElement.findElement(this.#elements, low, FindElement.BIAS_LOW);
     const highElement = FindElement.findElement(this.#elements, high, FindElement.BIAS_HIGH);
@@ -166,16 +183,16 @@ class VisibilityManager {
     return new ElementBounds(lowElement, highElement);
   }
 
-  // Updates the size manager with all of the revealed elements'
-  // sizes.
+  // Updates the size manager with all of the currently revealed
+  // elements' sizes.
   measureRevealed() {
     for (const element of this.#revealed) {
       this.#sizeManager.measure(element);
     }
   }
 
-  // Reveals an |element| so that it can be rendered. This includes
-  // unlocks and adding to various observers.
+  // Reveals |element| so that it can be rendered. This includes
+  // unlocking and adding to various observers.
   reveal(element) {
     this.#revealed.add(element);
     this.#elementIntersectionObserver.observe(element);
@@ -189,6 +206,8 @@ class VisibilityManager {
     });
   }
 
+  // Hides |element| so that it cannot be rendered. This includes
+  // locking and remove from various observers.
   hide(element) {
     this.#revealed.delete(element);
     this.#elementIntersectionObserver.unobserve(element);
@@ -202,6 +221,7 @@ class VisibilityManager {
     });
   }
 
+  // Set things up correctly when an element has been added.
   didAdd(element) {
     // Added children should be invisible initially. We want to make them
     // invisible at this MutationObserver timing, so that there is no
@@ -210,6 +230,7 @@ class VisibilityManager {
     this.hide(element);
   }
 
+  // Set things up correctly when an element has been removed.
   didRemove(element) {
     // Removed children should be made visible again. We should stop
     // observing them and discard any size info we have for them as it
@@ -223,17 +244,14 @@ class VisibilityManager {
     this.#sizeManager.remove(element);
   }
 
-  elementResizeObserverCallback(entries) {
-    this.scheduleUpdate();
-  }
-
-  scheduleUpdate() {
-    if (this.#updateRAFToken !== undefined) {
+  // Ensure that
+  scheduleSync() {
+    if (this.#syncRAFToken !== undefined) {
       return;
     }
 
-    this.#updateRAFToken = window.requestAnimationFrame(() => {
-      this.#updateRAFToken = undefined;
+    this.#syncRAFToken = window.requestAnimationFrame(() => {
+      this.#syncRAFToken = undefined;
       this.sync();
     });
   }
@@ -277,7 +295,7 @@ class VisibilityManager {
     }
 
     if (relevantMutation) {
-      this.scheduleUpdate();
+      this.scheduleSync();
     }
   }
 }
@@ -296,7 +314,7 @@ export class VirtualContent extends HTMLElement {
     this.#visibilityManager = new VisibilityManager(this.childNodes);
 
     this.#resizeObserver = new ResizeObserver(() => {
-      this.#visibilityManager.scheduleUpdate();
+      this.#visibilityManager.scheduleSync();
     });
     this.#resizeObserver.observe(this);
 
