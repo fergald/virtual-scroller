@@ -91,6 +91,11 @@ class SizeManager {
   }
 }
 
+// DO NOT SUBMIT Factoring this out from VirtualContent makes it easy
+// to hide all of the internals but it
+
+// Manages the visibility (locked/unlocked state) of a list of
+// elements.
 class VisibilityManager {
   #sizeManager = new SizeManager();
   #elements;
@@ -113,6 +118,9 @@ class VisibilityManager {
       this.elementResizeObserverCallback(entries);
     });
 
+    for (const element of this.#elements) {
+      this.didAdd(element);
+    }
     this.scheduleUpdate();
   }
 
@@ -272,9 +280,7 @@ class VisibilityManager {
       this.scheduleUpdate();
     }
   }
-
 }
-
 
 export class VirtualContent extends HTMLElement {
   #visibilityManager;
@@ -298,18 +304,5 @@ export class VirtualContent extends HTMLElement {
       this.#visibilityManager.applyMutationObserverRecords(records);
     });
     this.#mutationObserver.observe(this, {childList: true});
-    // Send a MutationRecord-like object with the current, complete list of
-    // child nodes to the MutationObserver callback; these nodes would not
-    // otherwise be seen by the observer.
-    this.#visibilityManager.applyMutationObserverRecords([
-      {
-        type: 'childList',
-        target: this,
-        addedNodes: Array.from(this.childNodes),
-        removedNodes: [],
-        previousSibling: null,
-        nextSibling: null,
-      },
-    ]);
   }
 }
