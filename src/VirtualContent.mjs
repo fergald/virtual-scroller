@@ -92,17 +92,13 @@ function findElementBounds(elements, low, high) {
 // Manages measuring and estimating sizes of elements.
 class SizeManager {
   sizes = new WeakMap();
-  sizeValid = new WeakMap();
 
   totalMeasuredSize = 0;
   measuredCount = 0;
 
   // Measures and stores the element's size if we don't already have a
   // valid measurement.
-  ensureValidSize(element) {
-    if (this.sizeValid.get(element)) {
-      return;
-    }
+  measure(element) {
     let oldSize = this.sizes.get(element);
     if (oldSize === undefined) {
       oldSize = 0;
@@ -111,16 +107,10 @@ class SizeManager {
     const newSize = element.offsetHeight;
     this.totalMeasuredSize += newSize - oldSize;
     this.sizes.set(element, newSize);
-    this.sizeValid.set(element, true);
-  }
-
-  // Marks the stored size for this element as invalid.
-  invalidate(element) {
-    this.sizeValid.set(element, false);
   }
 
   // Returns a size for this element, either the last stored size or
-  // an average size.
+  // an estimate based on previously measured elements or a default.
   getHopefulSize(element) {
     const size = this.sizes.get(element);
     return size === undefined ? this._getAverageSize() : size;
@@ -132,10 +122,15 @@ class SizeManager {
       DEFAULT_HEIGHT_ESTIMATE;
   }
 
-  // Removes all date |element| from the manager.
+  // Removes all data related to |element| from the manager.
   remove(element) {
+    let oldSize = this.sizes.get(element);
+    if (oldSize === undefined) {
+      return;
+    }
+    this.totalMeasuredSize -= oldSize;
+    this.measuredCount--;
     this.sizes.delete(element);
-    this.sizeValid.delete(element);
   }
 }
 
@@ -229,7 +224,7 @@ export class VirtualContent extends HTMLElement {
   // sizes.
   measureRevealed() {
     for (const element of this.revealed) {
-      this.sizeManager.ensureValidSize(element);
+      this.sizeManager.measure(element);
     }
   }
 
@@ -259,7 +254,6 @@ export class VirtualContent extends HTMLElement {
     }).then(null, reason => {
       console.log('Rejected: ', reason.message);
     });
-    this.sizeManager.invalidate(element);
   }
 
   mutationObserverCallback(records) {
@@ -319,9 +313,6 @@ export class VirtualContent extends HTMLElement {
   }
 
   elementResizeObserverCallback(entries) {
-    for (const entry of entries) {
-      this.sizeManager.invalidate(entry.target);
-    }
     this.scheduleUpdate();
   }
 
