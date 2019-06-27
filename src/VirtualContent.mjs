@@ -202,7 +202,8 @@ class VisibilityManager {
 
   unlock(element) {
     element.displayLock.commit().then(null, reason => {
-      console.log('Rejected: ', reason);
+      // TODO: Figure out how the LAPIs logging story.
+      // console.log('Commit rejected: ', element, reason);
     });
   }
 
@@ -217,7 +218,8 @@ class VisibilityManager {
       activatable: true,
       size: [LOCKED_WIDTH, this.#sizeManager.getHopefulSize(element)],
     }).then(null, reason => {
-      console.log('Rejected: ', reason.message);
+      // TODO: Figure out how the LAPIs logging story.
+      // console.log('Acquire rejected: ', element, reason);
     });
   }
 
