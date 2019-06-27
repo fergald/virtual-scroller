@@ -137,7 +137,7 @@ const LOCK_STATE_ACQUIRED = Symbol("LOCK_STATE_ACQUIRED");
 const LOCK_STATE_COMMITTING = Symbol("LOCK_STATE_COMMITTING");
 //const LOCK_STATE_COMMITTED = Symbol("LOCK_STATE_COMMITTED");
 
-export class VirtualContent extends HTMLElement {
+export class VirtualContentElement extends HTMLElement {
   sizes = new WeakMap();
   sizeValid = new WeakMap();
   updateRAFToken;
