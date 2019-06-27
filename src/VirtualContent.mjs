@@ -38,6 +38,7 @@ class ElementBounds {
     this.high = high;
   }
 
+  // Creates a Set containing all of the elements from low to high.
   elementSet() {
     const result = new Set();
     let element = this.low;
@@ -88,6 +89,7 @@ function findElementBounds(elements, low, high) {
   return new ElementBounds(lowElement, highElement);
 }
 
+// Manages measuring and estimating sizes of elements.
 class SizeManager {
   sizes = new WeakMap();
   sizeValid = new WeakMap();
@@ -95,6 +97,8 @@ class SizeManager {
   totalMeasuredSize = 0;
   measuredCount = 0;
 
+  // Measures and stores the element's size if we don't already have a
+  // valid measurement.
   ensureValidSize(element) {
     if (this.sizeValid.get(element)) {
       return;
@@ -110,21 +114,25 @@ class SizeManager {
     this.sizeValid.set(element, true);
   }
 
+  // Marks the stored size for this element as invalid.
   invalidate(element) {
     this.sizeValid.set(element, false);
   }
 
+  // Returns a size for this element, either the last stored size or
+  // an average size.
   getHopefulSize(element) {
     const size = this.sizes.get(element);
-    return size === undefined ? this.getAverageSize() : size;
+    return size === undefined ? this._getAverageSize() : size;
   }
 
-  getAverageSize() {
+  _getAverageSize() {
     return this.measuredCount > 0 ?
       this.totalMeasuredSize / this.measuredCount :
       DEFAULT_HEIGHT_ESTIMATE;
   }
 
+  // Removes all date |element| from the manager.
   remove(element) {
     this.sizes.delete(element);
     this.sizeValid.delete(element);
@@ -182,37 +190,51 @@ export class VirtualContent extends HTMLElement {
     this.scheduleUpdate();
   }
 
+  // Attempts to unlock a range of elements that are visible on-screen.
+  // This causes one forced layout.
   sync() {
     if (this.childNodes.length === 0) {
       return;
     }
 
+    // This causes a forced layout and takes measurements of all
+    // currently revealed elements.
     this.measureRevealed();
+
+    // Compute the pixel bounds of what we would like to reveal. Then
+    // find the elements corresponding to these bounds.
     const desiredLow = 0 - window.innerHeight * BUFFER;
     const desiredHigh = window.innerHeight + window.innerHeight * BUFFER;
-    const newBounds = findElementBounds(this.children, desiredLow, desiredHigh);
+    const newBounds = findElementBounds(this.childNodes, desiredLow, desiredHigh);
     const newRevealed = newBounds.elementSet();
 
+    // Lock and unlock the minimal set of elements to get us to the
+    // new state.
     const toHide = setDifference(this.revealed, newRevealed);
     toHide.forEach(e => this.hide(e));
-
     const toReveal = setDifference(newRevealed, this.revealed);
     toReveal.forEach(e => this.reveal(e));
 
-    // Now we have revealed what we hope will fill the screen. If we
-    // actually made a change, we should come back next frame and
-    // verify whether we have revealed the right amount.
+    // Now we have revealed what we hope will fill the screen. It
+    // could be incorrect. Rather than measuring now and correcting it
+    // which would involve an unknown number of forced layouts, we
+    // come back next frame and try to make it better. We know we can
+    // stop when we didn't hide or reveal any elements.
     if (toHide.size > 0 || toReveal.size > 0) {
       this.scheduleUpdate();
     }
   }
 
+  // Updates the size manager with all of the revealed elements'
+  // sizes.
   measureRevealed() {
     for (const element of this.revealed) {
       this.sizeManager.ensureValidSize(element);
     }
   }
 
+  // Reveals an |element| so that it can be rendered. This includes
+  // unlocks and adding to various observers.
   reveal(element) {
     this.revealed.add(element);
     this.elementIntersectionObserver.observe(element);
