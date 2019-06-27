@@ -93,7 +93,7 @@ class SizeManager {
 
 class VisibilityManager {
   #sizeManager = new SizeManager();
-  #childNodes;
+  #elements;
   #updateRAFToken;
 
   #elementIntersectionObserver;
@@ -101,8 +101,8 @@ class VisibilityManager {
 
   #revealed = new Set();
 
-  constructor(childNodes) {
-    this.#childNodes = childNodes;
+  constructor(elements) {
+    this.#elements = elements;
 
     this.#elementIntersectionObserver = new IntersectionObserver(() => {
       this.scheduleUpdate();
@@ -119,7 +119,7 @@ class VisibilityManager {
   // Attempts to unlock a range of elements that are visible on-screen.
   // This causes one forced layout.
   sync() {
-    if (this.#childNodes.length === 0) {
+    if (this.#elements.length === 0) {
       return;
     }
 
@@ -152,8 +152,8 @@ class VisibilityManager {
   }
 
   findElementBounds(low, high) {
-    const lowElement = FindElement.findElement(this.#childNodes, low, FindElement.BIAS_LOW);
-    const highElement = FindElement.findElement(this.#childNodes, high, FindElement.BIAS_HIGH);
+    const lowElement = FindElement.findElement(this.#elements, low, FindElement.BIAS_LOW);
+    const highElement = FindElement.findElement(this.#elements, high, FindElement.BIAS_HIGH);
 
     return new ElementBounds(lowElement, highElement);
   }
