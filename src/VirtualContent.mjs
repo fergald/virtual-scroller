@@ -200,10 +200,14 @@ class VisibilityManager {
     this.unlock(element);
   }
 
+  logLockingError(operation, reason, element) { // eslint-disable-line no-unused-vars
+    // TODO: Figure out the LAPIs error/warning logging story.
+    // console.log('Rejected: ', operation, element, reason);
+  }
+
   unlock(element) {
     element.displayLock.commit().then(null, reason => {
-      // TODO: Figure out how the LAPIs logging story.
-      // console.log('Commit rejected: ', element, reason);
+      this.logLockingError('Acquire', reason, element);
     });
   }
 
@@ -218,8 +222,7 @@ class VisibilityManager {
       activatable: true,
       size: [LOCKED_WIDTH, this.#sizeManager.getHopefulSize(element)],
     }).then(null, reason => {
-      // TODO: Figure out how the LAPIs logging story.
-      // console.log('Acquire rejected: ', element, reason);
+      this.logLockingError('Acquire', reason, element);
     });
   }
 
