@@ -53,9 +53,18 @@ class ElementBounds {
   }
 }
 
-function findElementIndex(elements, offset) {
+const BIAS_LOW = Symbol("BIAS_LOW");
+const BIAS_HIGH = Symbol("BIAS_HIGH");
+// Binary searches inside the list |elements| to find which element's
+// vertical bounds contain |offset|.  Assumes that the elements are
+// already sorted in increasing pixel order.  |bias| controls what
+// happens if |offset| is not contained within any element.  If |bias|
+// is BIAS_LOW, then this selects the lower element nearest |offset|,
+// otherwise it selects the higher element.
+function findElementIndex(elements, offset, bias) {
   let low = 0;
   let high = elements.length - 1;
+  let [high_dec, low_inc] = bias === BIAS_LOW ? [1, 0] : [0, 1];
   let i;
   while (true) {
     if (low === high) {
@@ -66,10 +75,10 @@ function findElementIndex(elements, offset) {
     const rect = element.getBoundingClientRect();
     if (rect.top > offset) {
       // The entire rect is > offset.
-      high = Math.max(i - 1, low);
+      high = Math.max(i - high_dec, low);
     } else if (rect.bottom < offset) {
       // The entire rect is < offset.
-      low = Math.min(i + 1, high);
+      low = Math.min(i + low_inc, high);
     } else {
       // The rect contains offset.
       break;
@@ -83,8 +92,8 @@ function findElement(elements, offset) {
 }
 
 function findElementBounds(elements, low, high) {
-  const lowElement = findElement(elements, low);
-  const highElement = findElement(elements, high);
+  const lowElement = findElement(elements, low, BIAS_LOW);
+  const highElement = findElement(elements, high, BIAS_HIGH);
 
   return new ElementBounds(lowElement, highElement);
 }
