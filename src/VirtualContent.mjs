@@ -81,7 +81,7 @@ class SizeManager {
 
   // Removes all data related to |element| from the manager.
   remove(element) {
-    let oldSize = this.#sizes.get(element);
+    const oldSize = this.#sizes.get(element);
     if (oldSize === undefined) {
       return;
     }

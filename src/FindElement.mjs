@@ -1,5 +1,5 @@
-export const BIAS_LOW = Symbol("BIAS_LOW");
-export const BIAS_HIGH = Symbol("BIAS_HIGH");
+export const BIAS_LOW = Symbol('BIAS_LOW');
+export const BIAS_HIGH = Symbol('BIAS_HIGH');
 
 // Binary searches inside the list |elements| to find which element's
 // vertical bounds contain |offset|.  Assumes that the elements are
@@ -10,7 +10,7 @@ export const BIAS_HIGH = Symbol("BIAS_HIGH");
 function findElementIndex(elements, offset, bias) {
   let low = 0;
   let high = elements.length - 1;
-  let [high_dec, low_inc] = bias === BIAS_LOW ? [1, 0] : [0, 1];
+  const [high_dec, low_inc] = bias === BIAS_LOW ? [1, 0] : [0, 1];
   let i;
   while (true) {
     if (low === high) {
