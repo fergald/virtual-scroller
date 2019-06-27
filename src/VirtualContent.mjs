@@ -91,53 +91,27 @@ class SizeManager {
   }
 }
 
-export class VirtualContent extends HTMLElement {
+class VisibilityManager {
   #sizeManager = new SizeManager();
+  #childNodes;
   #updateRAFToken;
 
   #elementIntersectionObserver;
-  #mutationObserver;
   #elementResizeObserver;
-  #thisResizeObserver;
 
   #revealed = new Set();
 
-  constructor() {
-    super();
-
-    const shadowRoot = this.attachShadow({mode: 'closed'});
-    shadowRoot.innerHTML = TEMPLATE;
+  constructor(childNodes) {
+    this.#childNodes = childNodes;
 
     this.#elementIntersectionObserver = new IntersectionObserver(() => {
       this.scheduleUpdate();
     });
 
-    this.#thisResizeObserver = new ResizeObserver(() => {
-      this.scheduleUpdate();
-    });
-    this.#thisResizeObserver.observe(this);
 
     this.#elementResizeObserver = new ResizeObserver(entries => {
       this.elementResizeObserverCallback(entries);
     });
-
-    this.#mutationObserver = new MutationObserver(records => {
-      this.mutationObserverCallback(records);
-    });
-    this.#mutationObserver.observe(this, {childList: true});
-    // Send a MutationRecord-like object with the current, complete list of
-    // child nodes to the MutationObserver callback; these nodes would not
-    // otherwise be seen by the observer.
-    this.mutationObserverCallback([
-      {
-        type: 'childList',
-        target: this,
-        addedNodes: Array.from(this.childNodes),
-        removedNodes: [],
-        previousSibling: null,
-        nextSibling: null,
-      },
-    ]);
 
     this.scheduleUpdate();
   }
@@ -145,7 +119,7 @@ export class VirtualContent extends HTMLElement {
   // Attempts to unlock a range of elements that are visible on-screen.
   // This causes one forced layout.
   sync() {
-    if (this.childNodes.length === 0) {
+    if (this.#childNodes.length === 0) {
       return;
     }
 
@@ -178,8 +152,8 @@ export class VirtualContent extends HTMLElement {
   }
 
   findElementBounds(low, high) {
-    const lowElement = FindElement.findElement(this.childNodes, low, FindElement.BIAS_LOW);
-    const highElement = FindElement.findElement(this.childNodes, high, FindElement.BIAS_HIGH);
+    const lowElement = FindElement.findElement(this.#childNodes, low, FindElement.BIAS_LOW);
+    const highElement = FindElement.findElement(this.#childNodes, high, FindElement.BIAS_HIGH);
 
     return new ElementBounds(lowElement, highElement);
   }
@@ -220,49 +194,6 @@ export class VirtualContent extends HTMLElement {
     });
   }
 
-  mutationObserverCallback(records) {
-    // It's unclear if we can support children which are not
-    // elements. We cannot control their visibility using display
-    // locking but we can just leave them alone.
-    //
-    // Relevant mutations are any additions or removals, including
-    // non-element as this may impact element bounds.
-    let relevantMutation = false;
-    const toRemove = new Set();
-    for (const record of records) {
-      relevantMutation = relevantMutation || record.removedNodes.size > 0;
-      for (const node of record.removedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          toRemove.add(node);
-        }
-      }
-    }
-
-    const toAdd = new Set();
-    for (const record of records) {
-      relevantMutation = relevantMutation || record.addedNodes.size > 0;
-      for (const node of record.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          if (toRemove.has(node)) {
-            toRemove.delete(node);
-          } else {
-            toAdd.add(node);
-          }
-        }
-      }
-    }
-    for (const node of toRemove) {
-      this.didRemove(node);
-    }
-    for (const node of toAdd) {
-      this.didAdd(node);
-    }
-
-    if (relevantMutation) {
-      this.scheduleUpdate();
-    }
-  }
-
   didAdd(element) {
     // Added children should be invisible initially. We want to make them
     // invisible at this MutationObserver timing, so that there is no
@@ -297,5 +228,86 @@ export class VirtualContent extends HTMLElement {
       this.#updateRAFToken = undefined;
       this.sync();
     });
+  }
+}
+
+export class VirtualContent extends HTMLElement {
+  #visibilityManager
+  #mutationObserver;
+  #resizeObserver;
+
+  constructor() {
+    super();
+
+    const shadowRoot = this.attachShadow({mode: 'closed'});
+    shadowRoot.innerHTML = TEMPLATE;
+
+    this.#visibilityManager = new VisibilityManager(this.childNodes);
+
+    this.#resizeObserver = new ResizeObserver(() => {
+      this.#visibilityManager.scheduleUpdate();
+    });
+    this.#resizeObserver.observe(this);
+
+    this.#mutationObserver = new MutationObserver(records => {
+      this.mutationObserverCallback(records);
+    });
+    this.#mutationObserver.observe(this, {childList: true});
+    // Send a MutationRecord-like object with the current, complete list of
+    // child nodes to the MutationObserver callback; these nodes would not
+    // otherwise be seen by the observer.
+    this.mutationObserverCallback([
+      {
+        type: 'childList',
+        target: this,
+        addedNodes: Array.from(this.childNodes),
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+      },
+    ]);
+  }
+
+  mutationObserverCallback(records) {
+    // It's unclear if we can support children which are not
+    // elements. We cannot control their visibility using display
+    // locking but we can just leave them alone.
+    //
+    // Relevant mutations are any additions or removals, including
+    // non-element as this may impact element bounds.
+    let relevantMutation = false;
+    const toRemove = new Set();
+    for (const record of records) {
+      relevantMutation = relevantMutation || record.removedNodes.size > 0;
+      for (const node of record.removedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          toRemove.add(node);
+        }
+      }
+    }
+
+    const toAdd = new Set();
+    for (const record of records) {
+      relevantMutation = relevantMutation || record.addedNodes.size > 0;
+      for (const node of record.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (toRemove.has(node)) {
+            toRemove.delete(node);
+          } else {
+            toAdd.add(node);
+          }
+        }
+      }
+    }
+    for (const node of toRemove) {
+      this.#visibilityManager.didRemove(node);
+    }
+    for (const node of toAdd) {
+      this.#visibilityManager.didAdd(node);
+    }
+
+    if (relevantMutation) {
+      this.#visibilityManager.scheduleUpdate();
+    }
   }
 }
