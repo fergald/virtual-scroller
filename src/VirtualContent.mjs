@@ -46,13 +46,6 @@ class ElementBounds {
   }
 }
 
-function findElementBounds(elements, low, high) {
-  const lowElement = FindElement.findElement(elements, low, FindElement.BIAS_LOW);
-  const highElement = FindElement.findElement(elements, high, FindElement.BIAS_HIGH);
-
-  return new ElementBounds(lowElement, highElement);
-}
-
 // Manages measuring and estimating sizes of elements.
 class SizeManager {
   sizes = new WeakMap();
@@ -164,7 +157,7 @@ export class VirtualContent extends HTMLElement {
     // find the elements corresponding to these bounds.
     const desiredLow = 0 - window.innerHeight * BUFFER;
     const desiredHigh = window.innerHeight + window.innerHeight * BUFFER;
-    const newBounds = findElementBounds(this.childNodes, desiredLow, desiredHigh);
+    const newBounds = this.findElementBounds(desiredLow, desiredHigh);
     const newRevealed = newBounds.elementSet();
 
     // Lock and unlock the minimal set of elements to get us to the
@@ -182,6 +175,13 @@ export class VirtualContent extends HTMLElement {
     if (toHide.size > 0 || toReveal.size > 0) {
       this.scheduleUpdate();
     }
+  }
+
+  findElementBounds(low, high) {
+    const lowElement = FindElement.findElement(this.childNodes, low, FindElement.BIAS_LOW);
+    const highElement = FindElement.findElement(this.childNodes, high, FindElement.BIAS_HIGH);
+
+    return new ElementBounds(lowElement, highElement);
   }
 
   // Updates the size manager with all of the revealed elements'
