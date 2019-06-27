@@ -48,59 +48,59 @@ class ElementBounds {
 
 // Manages measuring and estimating sizes of elements.
 class SizeManager {
-  sizes = new WeakMap();
+  #sizes = new WeakMap();
 
-  totalMeasuredSize = 0;
-  measuredCount = 0;
+  #totalMeasuredSize = 0;
+  #measuredCount = 0;
 
   // Measures and stores the element's size if we don't already have a
   // valid measurement.
   measure(element) {
-    let oldSize = this.sizes.get(element);
+    let oldSize = this.#sizes.get(element);
     if (oldSize === undefined) {
       oldSize = 0;
-      this.measuredCount++;
+      this.#measuredCount++;
     }
     const newSize = element.offsetHeight;
-    this.totalMeasuredSize += newSize - oldSize;
-    this.sizes.set(element, newSize);
+    this.#totalMeasuredSize += newSize - oldSize;
+    this.#sizes.set(element, newSize);
   }
 
   // Returns a size for this element, either the last stored size or
   // an estimate based on previously measured elements or a default.
   getHopefulSize(element) {
-    const size = this.sizes.get(element);
+    const size = this.#sizes.get(element);
     return size === undefined ? this._getAverageSize() : size;
   }
 
   _getAverageSize() {
-    return this.measuredCount > 0 ?
-      this.totalMeasuredSize / this.measuredCount :
+    return this.#measuredCount > 0 ?
+      this.#totalMeasuredSize / this.#measuredCount :
       DEFAULT_HEIGHT_ESTIMATE;
   }
 
   // Removes all data related to |element| from the manager.
   remove(element) {
-    let oldSize = this.sizes.get(element);
+    let oldSize = this.#sizes.get(element);
     if (oldSize === undefined) {
       return;
     }
-    this.totalMeasuredSize -= oldSize;
-    this.measuredCount--;
-    this.sizes.delete(element);
+    this.#totalMeasuredSize -= oldSize;
+    this.#measuredCount--;
+    this.#sizes.delete(element);
   }
 }
 
 export class VirtualContent extends HTMLElement {
-  sizeManager = new SizeManager();
-  updateRAFToken;
+  #sizeManager = new SizeManager();
+  #updateRAFToken;
 
-  elementIntersectionObserver;
-  mutationObserver;
-  elementResizeObserver;
-  thisResizeObserver;
+  #elementIntersectionObserver;
+  #mutationObserver;
+  #elementResizeObserver;
+  #thisResizeObserver;
 
-  revealed = new Set();
+  #revealed = new Set();
 
   constructor() {
     super();
@@ -108,23 +108,23 @@ export class VirtualContent extends HTMLElement {
     const shadowRoot = this.attachShadow({mode: 'closed'});
     shadowRoot.innerHTML = TEMPLATE;
 
-    this.elementIntersectionObserver = new IntersectionObserver(() => {
+    this.#elementIntersectionObserver = new IntersectionObserver(() => {
       this.scheduleUpdate();
     });
 
-    this.thisResizeObserver = new ResizeObserver(() => {
+    this.#thisResizeObserver = new ResizeObserver(() => {
       this.scheduleUpdate();
     });
-    this.thisResizeObserver.observe(this);
+    this.#thisResizeObserver.observe(this);
 
-    this.elementResizeObserver = new ResizeObserver(entries => {
+    this.#elementResizeObserver = new ResizeObserver(entries => {
       this.elementResizeObserverCallback(entries);
     });
 
-    this.mutationObserver = new MutationObserver(records => {
+    this.#mutationObserver = new MutationObserver(records => {
       this.mutationObserverCallback(records);
     });
-    this.mutationObserver.observe(this, {childList: true});
+    this.#mutationObserver.observe(this, {childList: true});
     // Send a MutationRecord-like object with the current, complete list of
     // child nodes to the MutationObserver callback; these nodes would not
     // otherwise be seen by the observer.
@@ -162,9 +162,9 @@ export class VirtualContent extends HTMLElement {
 
     // Lock and unlock the minimal set of elements to get us to the
     // new state.
-    const toHide = Sets.difference(this.revealed, newRevealed);
+    const toHide = Sets.difference(this.#revealed, newRevealed);
     toHide.forEach(e => this.hide(e));
-    const toReveal = Sets.difference(newRevealed, this.revealed);
+    const toReveal = Sets.difference(newRevealed, this.#revealed);
     toReveal.forEach(e => this.reveal(e));
 
     // Now we have revealed what we hope will fill the screen. It
@@ -187,17 +187,17 @@ export class VirtualContent extends HTMLElement {
   // Updates the size manager with all of the revealed elements'
   // sizes.
   measureRevealed() {
-    for (const element of this.revealed) {
-      this.sizeManager.measure(element);
+    for (const element of this.#revealed) {
+      this.#sizeManager.measure(element);
     }
   }
 
   // Reveals an |element| so that it can be rendered. This includes
   // unlocks and adding to various observers.
   reveal(element) {
-    this.revealed.add(element);
-    this.elementIntersectionObserver.observe(element);
-    this.elementResizeObserver.observe(element);
+    this.#revealed.add(element);
+    this.#elementIntersectionObserver.observe(element);
+    this.#elementResizeObserver.observe(element);
     this.unlock(element);
   }
 
@@ -208,13 +208,13 @@ export class VirtualContent extends HTMLElement {
   }
 
   hide(element) {
-    this.revealed.delete(element);
-    this.elementIntersectionObserver.unobserve(element);
-    this.elementResizeObserver.unobserve(element);
+    this.#revealed.delete(element);
+    this.#elementIntersectionObserver.unobserve(element);
+    this.#elementResizeObserver.unobserve(element);
     element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
-      size: [LOCKED_WIDTH, this.sizeManager.getHopefulSize(element)],
+      size: [LOCKED_WIDTH, this.#sizeManager.getHopefulSize(element)],
     }).then(null, reason => {
       console.log('Rejected: ', reason.message);
     });
@@ -275,13 +275,13 @@ export class VirtualContent extends HTMLElement {
     // Removed children should be made visible again. We should stop
     // observing them and discard any size info we have for them as it
     // may have become incorrect.
-    this.revealed.delete(element);
+    this.#revealed.delete(element);
     if (element.displayLock.locked) {
       this.unlock(element);
     }
-    this.elementIntersectionObserver.unobserve(element);
-    this.elementResizeObserver.unobserve(element);
-    this.sizeManager.remove(element);
+    this.#elementIntersectionObserver.unobserve(element);
+    this.#elementResizeObserver.unobserve(element);
+    this.#sizeManager.remove(element);
   }
 
   elementResizeObserverCallback(entries) {
@@ -289,12 +289,12 @@ export class VirtualContent extends HTMLElement {
   }
 
   scheduleUpdate() {
-    if (this.updateRAFToken !== undefined) {
+    if (this.#updateRAFToken !== undefined) {
       return;
     }
 
-    this.updateRAFToken = window.requestAnimationFrame(() => {
-      this.updateRAFToken = undefined;
+    this.#updateRAFToken = window.requestAnimationFrame(() => {
+      this.#updateRAFToken = undefined;
       this.sync();
     });
   }
