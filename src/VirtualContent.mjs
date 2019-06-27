@@ -1,3 +1,6 @@
+import * as Sets from './Sets.mjs';
+
+
 const BUFFER = 0.2;
 const DEFAULT_HEIGHT_ESTIMATE = 100;
 const LOCKED_WIDTH = 1;
@@ -19,17 +22,6 @@ const TEMPLATE = `
 </style>
 <slot></slot>
 `;
-
-// a - b
-function setDifference(a, b) {
-  const result = new Set();
-  for (const element of a) {
-    if (!b.has(element)) {
-      result.add(element);
-    }
-  }
-  return result;
-}
 
 // Represents a range of elements from |low| to |high|.
 class ElementBounds {
@@ -214,9 +206,9 @@ export class VirtualContent extends HTMLElement {
 
     // Lock and unlock the minimal set of elements to get us to the
     // new state.
-    const toHide = setDifference(this.revealed, newRevealed);
+    const toHide = Sets.difference(this.revealed, newRevealed);
     toHide.forEach(e => this.hide(e));
-    const toReveal = setDifference(newRevealed, this.revealed);
+    const toReveal = Sets.difference(newRevealed, this.revealed);
     toReveal.forEach(e => this.reveal(e));
 
     // Now we have revealed what we hope will fill the screen. It
