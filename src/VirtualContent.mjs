@@ -252,28 +252,36 @@ export class VirtualContent extends HTMLElement {
       }
     }
     for (const node of toRemove) {
-      // Removed children should be made visible again. We should stop
-      // observing them and discard any size info we have for them as it
-      // may have become incorrect.
-      this.revealed.delete(node);
-      if (node.displayLock.locked) {
-        this.unlock(node);
-      }
-      this.elementIntersectionObserver.unobserve(node);
-      this.elementResizeObserver.unobserve(node);
-      this.sizeManager.remove(node);
+      this.didRemove(node);
     }
     for (const node of toAdd) {
-      // Added children should be invisible initially. We want to make them
-      // invisible at this MutationObserver timing, so that there is no
-      // frame where the browser is asked to render all of the children
-      // (which could be a lot).
-      this.hide(node);
+      this.didAdd(node);
     }
 
     if (relevantMutation) {
       this.scheduleUpdate();
     }
+  }
+
+  didAdd(element) {
+    // Added children should be invisible initially. We want to make them
+    // invisible at this MutationObserver timing, so that there is no
+    // frame where the browser is asked to render all of the children
+    // (which could be a lot).
+    this.hide(element);
+  }
+
+  didRemove(element) {
+    // Removed children should be made visible again. We should stop
+    // observing them and discard any size info we have for them as it
+    // may have become incorrect.
+    this.revealed.delete(element);
+    if (element.displayLock.locked) {
+      this.unlock(element);
+    }
+    this.elementIntersectionObserver.unobserve(element);
+    this.elementResizeObserver.unobserve(element);
+    this.sizeManager.remove(element);
   }
 
   elementResizeObserverCallback(entries) {
