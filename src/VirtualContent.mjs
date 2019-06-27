@@ -229,46 +229,8 @@ class VisibilityManager {
       this.sync();
     });
   }
-}
 
-export class VirtualContent extends HTMLElement {
-  #visibilityManager
-  #mutationObserver;
-  #resizeObserver;
-
-  constructor() {
-    super();
-
-    const shadowRoot = this.attachShadow({mode: 'closed'});
-    shadowRoot.innerHTML = TEMPLATE;
-
-    this.#visibilityManager = new VisibilityManager(this.childNodes);
-
-    this.#resizeObserver = new ResizeObserver(() => {
-      this.#visibilityManager.scheduleUpdate();
-    });
-    this.#resizeObserver.observe(this);
-
-    this.#mutationObserver = new MutationObserver(records => {
-      this.mutationObserverCallback(records);
-    });
-    this.#mutationObserver.observe(this, {childList: true});
-    // Send a MutationRecord-like object with the current, complete list of
-    // child nodes to the MutationObserver callback; these nodes would not
-    // otherwise be seen by the observer.
-    this.mutationObserverCallback([
-      {
-        type: 'childList',
-        target: this,
-        addedNodes: Array.from(this.childNodes),
-        removedNodes: [],
-        previousSibling: null,
-        nextSibling: null,
-      },
-    ]);
-  }
-
-  mutationObserverCallback(records) {
+  applyMutationObserverRecords(records) {
     // It's unclear if we can support children which are not
     // elements. We cannot control their visibility using display
     // locking but we can just leave them alone.
@@ -300,14 +262,54 @@ export class VirtualContent extends HTMLElement {
       }
     }
     for (const node of toRemove) {
-      this.#visibilityManager.didRemove(node);
+      this.didRemove(node);
     }
     for (const node of toAdd) {
-      this.#visibilityManager.didAdd(node);
+      this.didAdd(node);
     }
 
     if (relevantMutation) {
-      this.#visibilityManager.scheduleUpdate();
+      this.scheduleUpdate();
     }
+  }
+
+}
+
+
+export class VirtualContent extends HTMLElement {
+  #visibilityManager;
+  #mutationObserver;
+  #resizeObserver;
+
+  constructor() {
+    super();
+
+    const shadowRoot = this.attachShadow({mode: 'closed'});
+    shadowRoot.innerHTML = TEMPLATE;
+
+    this.#visibilityManager = new VisibilityManager(this.childNodes);
+
+    this.#resizeObserver = new ResizeObserver(() => {
+      this.#visibilityManager.scheduleUpdate();
+    });
+    this.#resizeObserver.observe(this);
+
+    this.#mutationObserver = new MutationObserver(records => {
+      this.#visibilityManager.applyMutationObserverRecords(records);
+    });
+    this.#mutationObserver.observe(this, {childList: true});
+    // Send a MutationRecord-like object with the current, complete list of
+    // child nodes to the MutationObserver callback; these nodes would not
+    // otherwise be seen by the observer.
+    this.#visibilityManager.applyMutationObserverRecords([
+      {
+        type: 'childList',
+        target: this,
+        addedNodes: Array.from(this.childNodes),
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+      },
+    ]);
   }
 }
