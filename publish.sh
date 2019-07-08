@@ -9,7 +9,7 @@
 #
 # publish.sh <branch>
 #
-# is will figure out the sha for that branch, publish that and
+# will figure out the sha for that branch, publish that and
 # link versions/<branch> to that sha.
 
 if [ ! -e .git ]; then
