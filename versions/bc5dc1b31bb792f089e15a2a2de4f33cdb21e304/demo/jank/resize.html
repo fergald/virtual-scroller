@@ -1,0 +1,39 @@
+<style>
+  #contentDiv {
+      animation-direction: alternate;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      animation-name: resize;
+  }
+  @keyframes resize {
+      0% { width: 400px; }
+      100% { width: 600px; }
+  }
+</style>
+
+<div style="width: 100%; display: flex">
+  <raf-spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+    <div><code>useVC=<span id=useVC-placeholder>nnn</span></code> : use virtual-content or just a DIV</div>
+  </div>
+</div>
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
+
+<script type="module">
+  import '../../src/index.mjs';
+  import '../util/raf-spinner.mjs';
+  import * as Params from '../util/Params.mjs';
+  import * as Base from './base.mjs';
+
+  let statusDiv = document.getElementById("statusDiv")
+  let useVC = Params.get("useVC", (p) => {return parseInt(p) || 0}, statusDiv);
+  let elementType = useVC ? "virtual-content" : "div";
+  let vc = document.createElement(elementType);
+  vc.id = "vc";
+  contentDiv.appendChild(vc);
+  Base.populate(vc, statusDiv);
+</script>
