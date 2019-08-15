@@ -29,18 +29,26 @@ class RevealTree extends HTMLElement {
 
   constructor() {
     super();
-    const shadowRoot = this.attachShadow({mode: 'closed'});
+  }
+
+  initShadowRoot() {
+    const options = {mode: 'closed'};
+    if (this.useISA) {
+      options["slotting"] = "manual";
+    }
+    const shadowRoot = this.attachShadow(options);
     shadowRoot.innerHTML = TEMPLATE;
     this.root = document.createElement("div");
     this.root.id = "root";
     shadowRoot.appendChild(this.root);
-    this.populate();
   }
 
   populate() {
     this.slotPerChild = parseInt(this.getAttribute("slot-per-child"));
     this.branch = parseInt(this.getAttribute("branch")) || 10;
     this.useISA = parseInt(this.getAttribute("use-isa")) || 0;
+
+    this.initShadowRoot();
 
     let slots = [];
     let slot;
