@@ -4,7 +4,9 @@
     <p>Parameters you can tweak in the URL (and their current settings).</p>
   </div>
 </div>
-<input type=button onClick="togglePause()" value="toggle pause">
+<div id=buttonDiv>
+  <input type=button onClick="togglePause()" value="toggle pause">
+</div>
 <div style="width: 100%">
   <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
 </div>
@@ -78,6 +80,6 @@
       button.onclick = go;
       doPopulate();
     };
-    contentDiv.appendChild(button);
+    buttonDiv.appendChild(button);
   }
 </script>
