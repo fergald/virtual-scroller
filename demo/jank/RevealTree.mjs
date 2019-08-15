@@ -49,8 +49,7 @@ class RevealTree extends HTMLElement {
     for (const child of this.children) {
       slot = document.createElement("slot");
       slots.push(slot);
-      slot.name = slots.length;
-      this.assign(slot, child);
+      this.assign(slot, child, slots.length);
     }
 
     this.slots = slots;
@@ -73,12 +72,13 @@ class RevealTree extends HTMLElement {
     }
   }
 
-  assign(slot, element) {
+  assign(slot, element, name) {
     this.childToSlot.set(element, slot);
     if (this.useISA) {
       slot.assign([element]);
     } else {
-      element.slot = slot.name;
+      element.slot = name;
+      slot.name = name;
     }
   }
 
