@@ -53,7 +53,6 @@ class RevealTree extends HTMLElement {
     }
 
     this.slots = slots;
-    this.root.innerHTML = TEMPLATE;
     let tree = this.createTree(slots);
     this.tree = tree;
     if (tree) {
