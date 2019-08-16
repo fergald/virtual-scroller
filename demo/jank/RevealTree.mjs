@@ -51,11 +51,9 @@ class RevealTree extends HTMLElement {
     this.initShadowRoot();
 
     let slots = [];
-    let slot;
-    let i = 0;
 
     for (const child of this.children) {
-      slot = document.createElement("slot");
+      const slot = document.createElement("slot");
       slots.push(slot);
       this.assign(slot, child, slots.length);
     }
