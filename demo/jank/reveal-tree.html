@@ -31,6 +31,7 @@
   import * as Params from '../util/Params.mjs';
   import * as Base from './base.mjs';
   import * as RevealTree from './RevealTree.mjs';
+  import * as Siblings from './Siblings.mjs';
 
   let statusDiv = document.getElementById("statusDiv")
   const resize = Params.get("resize", (p) => { return parseInt(p)}, statusDiv);
@@ -68,7 +69,8 @@
     // let childIndex = (i % 2) ? 5 : lt.children.length - 5;
     let childIndex = (i * 10) % lt.children.length;
     try {
-      lt.revealElementAndSiblings(lt.children[childIndex]);
+      const elements = Siblings.neighbours(lt.children[childIndex], 5);
+      lt.revealElements(elements);
     } catch(e) {
       console.log(childIndex);
       throw e;

@@ -144,23 +144,7 @@ class RevealTree extends HTMLElement {
     }
   }
 
-  revealElementAndSiblings(element) {
-    this.revealElementSlotPerChild(element);
-  }
-
-
-  nextSiblings(element, count, direction, siblings) {
-    while (element != null && count) {
-      siblings.push(element);
-      element = direction == -1 ? element.previousSibling : element.nextSibling;
-      count--;
-    }
-  }
-
-  revealElementSlotPerChild(element) {
-    let elements = [element];
-    this.nextSiblings(element.previousSibling, 5, -1, elements);
-    this.nextSiblings(element.nextSibling, 5, +1, elements);
+  revealElements(elements) {
     let ancestors = new Set();
     this.findAncestorsForElements(elements, ancestors);
     this.updateRevealed(ancestors);
