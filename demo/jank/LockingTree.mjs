@@ -35,13 +35,19 @@ class LockingTree extends HTMLElement {
 
   constructor() {
     super();
-    const shadowRoot = this.attachShadow({mode: 'closed'});
+  }
+
+  initShadowRoot() {
+    const options = {mode: 'closed'};
+    if (this.useISA) {
+      options["slotting"] = "manual";
+    }
+    const shadowRoot = this.attachShadow(options);
     shadowRoot.innerHTML = TEMPLATE;
     this.root = document.createElement("div");
     this.root.id = "root";
     shadowRoot.appendChild(this.root);
     this.visibleSlot = document.createElement("slot");
-    this.populate();
   }
 
   populate() {
@@ -55,6 +61,8 @@ class LockingTree extends HTMLElement {
     }
     this.useISA = parseInt(this.getAttribute("use-isa"));
 
+    this.initShadowRoot();
+
     let slots = [];
     let slot;
     let i = 0;
@@ -64,10 +72,9 @@ class LockingTree extends HTMLElement {
         slot = document.createElement("slot");
         this.slotToChildren.set(slot, []);
         slots.push(slot);
-        slot.name = slots.length;
       }
       this.childToSlot.set(child, slot);
-      this.assign(slot, [child]);
+      this.assign(slot, [child], slots.length);
       this.slotToChildren.get(slot).push(child);
       i++;
     }
@@ -92,12 +99,17 @@ class LockingTree extends HTMLElement {
     }
   }
 
-  assign(slot, elements) {
+  assign(slot, elements, name) {
     if (this.useISA) {
       slot.assign(elements);
     } else {
+      if (name) {
+        slot.name = name;
+      } else {
+        name = slot.name;
+      }
       for (const e of elements) {
-        e.slot = slot.name;
+        e.slot = name;
       }
     }
   }
