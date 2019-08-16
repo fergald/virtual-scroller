@@ -67,7 +67,7 @@
     lt.populate();
   }
 
-  let populate = Params.get("populate", (p) => {return parseInt(p) || 0}, statusDiv);
+  let populate = Params.get("populate", (p) => {return parseInt(p) || 1}, statusDiv);
   if (populate) {
     doPopulate();
     go();
