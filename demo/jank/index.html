@@ -1,6 +1,7 @@
 <style>
   .terrible { background-color: #cc0202 }
   .bad { background-color: #ff7900 }
+  .good { background-color: #00ff00 }
 </style>
 
 <ul>
@@ -85,13 +86,44 @@
     <ul>
       <li>10K elements
         <ul>
-          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Using element.slot</a> (60 FPS)<br>
-          <li><a href="binary-tree-slots.html?divs=10000&useLT=1&useISA=1">Using imperative slot assignment</a> <span class="terrible">(1 FPS)</span><br>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1">Using element.slot</a> <span class="good">(60 FPS)</span><br>
+          <li><a href="binary-tree-slots.html?divs=10000&useLT=1&useISA=1">Using imperative slot assignment</a> <span class="terrible">(15 FPS)</span><br>
         </ul>
       </li>
       <li>100K elements
         <ul>
           <li><a href="binary-tree-slots.html?divs=100000&useLT=1">Using element.slot</a> <span class="terrible">5 FPS</span> (insertNode=15ms, assignedNodes=30ms, recalc style=10ms and maybe a lot of <a href="https://crbug.com/968928">https://crbug.com/968928)</a><br>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a id="reveal-tree"><b>Revealing tree prototype</b></a>
+    <p>This is a new approach where a tree of slots is maintained.
+      Each elements is assigned to 1 slot.
+      When elements should be visible,
+      all of their ancestors are unlocked.
+      All other elements in the tree remain locked.
+      We can no longer rely on the layout engine to size the empty space above/below the visible content.
+    </p>
+    <p><b>This is not a scroller</b>, it's a proof-of-concept for benchmarking.
+      It cannot handle updates
+      and does not manage spacer divs above/below the unlocked content.
+      It simply cycles through groups of elements,
+      revealing chunks of 10 as fast as frame rate allows.</p>
+
+    <p>It has quite slow setup due to O(n^2) effects in adding many slots (<a href="https://crbug.com/985652">https://crbug.com/985652</a>).
+      Otherwise, it seems quite performant.
+    </p>
+    <ul>
+      <li>10K elements
+        <ul>
+          <li><a href="reveal-tree.html?divs=10000&useLT=1">Using element.slot</a> <span class="good">(60 FPS)</span><br>
+          <li><a href="reveal-tree.html?divs=10000&useLT=1&useISA=1">Using imperative slot assignment</a> <span class="good">(60 FPS)</span><br>
+        </ul>
+      </li>
+      <li>100K elements
+        <ul>
+          <li><a href="reveal-tree.html?divs=100000&useLT=1&useISA=1">Using imperative slot assignment</a> <span class="good">(60 FPS)</span> (takes a very long time to initialize)<br>
         </ul>
       </li>
     </ul>
