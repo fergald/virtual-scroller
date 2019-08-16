@@ -1,5 +1,5 @@
 'use strict';
-const DEBUG = 1;
+const DEBUG = 0;
 
 import * as Locker from '../util/Locker.mjs';
 
