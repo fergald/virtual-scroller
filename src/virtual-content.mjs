@@ -221,6 +221,7 @@ export class VirtualContentElement extends HTMLElement {
       ["useLocking", [this.setUseLocking, "Whether to lock elements or just change their color"]],
       ["useIntersection", [this.setUseIntersection, "Use intersection observers on all elements"]],
       ["useForcedLayouts", [this.setUseForcedLayouts, "Keep forcing layouts until everything is correct before yielding"]],
+      ["useColor", [this.setUseColor, "Use different colors for locked/unlocked elements"]],
 //      ["useScrollEvents", [this.setUseScrollEvents, ""]],
     ]);
 
@@ -278,6 +279,10 @@ export class VirtualContentElement extends HTMLElement {
       scroller.removeEventListener('scroll', this.scrollEventListener);
       return 0;
     }
+  }
+
+  setUseColor(useColor) {
+    return this.useColor = useColor ? parseInt(useColor) : COLOUR_DEFAULT;
   }
 
   sync() {
