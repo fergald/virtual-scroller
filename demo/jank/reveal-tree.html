@@ -57,16 +57,19 @@
     console.log("Took: ", performance.now() - t, e);
   }
 
-  let pause = false;
+  let pause = Params.get("pause", (p) => { return parseInt(p)}, statusDiv);
   function togglePause() {
     pause = !pause;
   }
   window.togglePause = togglePause;
 
-  function update(i) {
-    if (pause) {
-      return;
+  function maybeUpdate(i) {
+    if (!pause) {
+      update(i);
     }
+  }
+
+  function update(i) {
     // let childIndex = (i % 2) ? 5 : lt.children.length - 5;
     let childIndex = (i * 10) % lt.children.length;
     try {
@@ -82,7 +85,10 @@
   let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
   function go() {
     console.log("Start unlocking", nFrames);
-    Base.everyNFrames(nFrames, update);
+    Base.everyNFrames(nFrames, maybeUpdate);
+    if (pause) {
+      update(0);
+    }
   }
 
   function doPopulate() {
