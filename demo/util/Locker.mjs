@@ -4,10 +4,11 @@ export class Locker {
   }
 
   lock(element, andThen) {
+    let size = element.lockSize ? [10, element.lockSize] : this.size;
     return element.displayLock.acquire({
       timeout: Infinity,
       activatable: true,
-      size: this.size,
+      size: size,
     }).then(andThen, reason => {console.log("Rejected: ", reason.message)});
   }
 

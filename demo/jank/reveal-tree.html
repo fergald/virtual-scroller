@@ -62,6 +62,7 @@
   }
   window.togglePause = togglePause;
 
+  let lastChild;
   function update(i) {
     if (pause) {
       return;
@@ -69,8 +70,12 @@
     // let childIndex = (i % 2) ? 5 : lt.children.length - 5;
     let childIndex = (i * 10) % lt.children.length;
     try {
+      if (lastChild) {
+        lastChild.scrollIntoView();
+      }
       const elements = Siblings.neighbours(lt.children[childIndex], 5);
       lt.revealElements(elements);
+      lastChild = elements[elements.length - 1];
     } catch(e) {
       console.log(childIndex);
       throw e;

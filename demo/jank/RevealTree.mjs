@@ -105,6 +105,7 @@ class RevealTree extends HTMLElement {
     let divs = [];
     for (const slot of slots) {
       let div = document.createElement("div");
+      div.lockSize = 50;
       divs.push(div);
       div.appendChild(slot);
       Locker.locker.lock(div);
@@ -116,12 +117,14 @@ class RevealTree extends HTMLElement {
     let newDivs = [];
     for (let i = 0; i < divs.length; i++) {
       let div = document.createElement("div");
-      Locker.locker.lock(div);
+      div.lockSize = 0;
       newDivs.push(div);
       for (let j = 0; j < this.branch && i < divs.length; j++) {
         div.appendChild(divs[i]);
+        div.lockSize += divs[i].lockSize;
         i++;
       }
+      Locker.locker.lock(div);
       i--;
     }
     return newDivs;
