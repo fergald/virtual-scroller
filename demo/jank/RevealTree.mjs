@@ -67,6 +67,23 @@ class RevealTree extends HTMLElement {
     }
   }
 
+  traverse(method) {
+    this.traverseInner(this.tree[0], method);
+  }
+
+  traverseInner(tree, method) {
+    if (!tree) {
+      return;
+    }
+    method(tree);
+    if (!tree.children) {
+      return;
+    }
+    for (let i = 0; i < tree.children.length; i++) {
+      this.traverseInner(tree.children[i], method);
+    }
+  }
+
   labelTree(tree, label) {
     if (tree == null) {
       return;

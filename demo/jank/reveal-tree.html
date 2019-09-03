@@ -70,6 +70,12 @@
   }
 
   function update(i) {
+    // Count how many locked elements there are.
+    if (! (i % 100) && false) {
+      let locked = 0;
+      lt.traverse(e => { if (e.displayLock.locked) { locked++} });
+      console.log("locked=", locked);
+    }
     // let childIndex = (i % 2) ? 5 : lt.children.length - 5;
     let childIndex = (i * 10) % lt.children.length;
     try {
