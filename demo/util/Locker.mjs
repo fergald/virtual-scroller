@@ -9,7 +9,7 @@ export class Locker {
       timeout: Infinity,
       activatable: true,
       size: size,
-    }).then(andThen, reason => {console.log("Rejected: ", reason.message)});
+    }).then(andThen);
   }
 
   update(element, andThen) {
@@ -17,7 +17,7 @@ export class Locker {
   }
 
   unlock(element, andThen) {
-    return element.displayLock.commit().then(andThen, reason => {console.log("Rejected: ", reason)});
+    return element.displayLock.commit().then(andThen);
   }
 
   warn(element) {
