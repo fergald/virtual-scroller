@@ -1,10 +1,15 @@
-<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport><title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
+<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport>
+  <script>
+    console.log("start", performance.now());
+  </script>
+  <title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
    function toggleStatus(div) {
      div.parentNode.classList.toggle('wrapped');
    }
   </script>
   <script type=module async src="std:elements/virtual-scroller"></script>
   <style>
+    :not(:defined) { display: none; }
    .bad, .bad *:not(.X\58X) { color: gray; }
 
    .fingerprint { position: absolute; right: 0; z-index: 5; }
@@ -117,6 +122,11 @@
    #abstractimg .left, #abstractimg .bottom { word-spacing: 12px; }
    #abstractimg .right { font-size: 25px; }
   </style><body>
+    <script>
+      customElements.whenDefined("virtual-scroller").then(() => {
+        console.log("defined", performance.now());
+      });
+    </script>
 <virtual-scroller>
   <script async="" src=/html-dfn.js></script>
   <script data-file-issue-url=https://github.com/whatwg/html/issues/new async="" src=https://resources.whatwg.org/file-issue.js></script>
@@ -16574,5 +16584,4 @@ document<c- p>.</c->body<c- p>.</c->appendChild<c- p>(</c->wbr<c- p>);</c-></cod
   element's <a id=hyperlink-auditing:node-document-2 href=https://dom.spec.whatwg.org/#concept-node-document data-x-internal=node-document>node document</a>, and then run these steps for each <a href=#resulting-url-record id=hyperlink-auditing:resulting-url-record>resulting URL
   record</a> <var>ping URL</var>, ignoring tokens that fail to parse:</p>
 
-  <ol><li><p>If <var>ping URL</var>'s <a href=https://url.spec.whatwg.org/#concept-url-scheme id=hyperlink-auditing:concept-url-scheme data-x-internal=concept-url-scheme>scheme</a> is not an
-   <a id=hyperlink-auditing:http(s)-scheme href=https://fetch.spec.whatwg.org/#http-scheme data-x-internal=http(s)-scheme>HTTP(S) scheme</a>, then return.<li
+  <ol><li><p>If <var>ping URL</var>'s <a href=https://url.spec.whatwg.org/#concept-ur

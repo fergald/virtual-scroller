@@ -1,10 +1,15 @@
-<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport><title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
+<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport>
+  <script>
+    console.log("start", performance.now());
+  </script>
+  <title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
    function toggleStatus(div) {
      div.parentNode.classList.toggle('wrapped');
    }
   </script>
   <script type=module async src="std:elements/virtual-scroller"></script>
   <style>
+    :not(:defined) { display: none; }
    .bad, .bad *:not(.X\58X) { color: gray; }
 
    .fingerprint { position: absolute; right: 0; z-index: 5; }
@@ -117,6 +122,11 @@
    #abstractimg .left, #abstractimg .bottom { word-spacing: 12px; }
    #abstractimg .right { font-size: 25px; }
   </style><body>
+    <script>
+      customElements.whenDefined("virtual-scroller").then(() => {
+        console.log("defined", performance.now());
+      });
+    </script>
 <virtual-scroller>
   <script async="" src=/html-dfn.js></script>
   <script data-file-issue-url=https://github.com/whatwg/html/issues/new async="" src=https://resources.whatwg.org/file-issue.js></script>
@@ -8162,6 +8172,4 @@ console<c- p>.</c->assert<c- p>(</c->image<c- p>.</c->height <c- o>===</c-> <c- 
   <p id=dom-domstringmap-removeitem>To <a id=embedding-custom-non-visible-data-with-the-data-*-attributes:delete-an-existing-named-property href=https://heycam.github.io/webidl/#dfn-delete-an-existing-named-property data-x-internal=delete-an-existing-named-property>delete an existing named property</a>
   <var>name</var> for a <code id=embedding-custom-non-visible-data-with-the-data-*-attributes:domstringmap-10><a href=#domstringmap>DOMStringMap</a></code>, run the following steps:</p>
 
-  <ol><li><p>For each <a id=embedding-custom-non-visible-data-with-the-data-*-attributes:uppercase-ascii-letters-4 href=https://infra.spec.whatwg.org/#ascii-upper-alpha data-x-internal=uppercase-ascii-letters>ASCII upper alpha</a> in <var>name</var>, insert a U+002D HYPHEN-MINUS
-   character (-) before the character and replace the character with the same character
-   <a id=embedding-custom-non-visible-data-with-the-data-*-attributes:converte
+  <ol><li><p>For each <a id=embedding-custom-non-visible-data-with-the-data-*-attributes:uppercase-ascii-letters-4 href=https://infra.spec.whatwg.org/#ascii-upper-alpha data-x-interna

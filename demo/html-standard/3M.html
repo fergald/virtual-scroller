@@ -1,10 +1,15 @@
-<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport><title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
+<!DOCTYPE html><html lang=en-US-x-hixie><meta charset=utf-8><meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name=viewport>
+  <script>
+    console.log("start", performance.now());
+  </script>
+  <title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
    function toggleStatus(div) {
      div.parentNode.classList.toggle('wrapped');
    }
   </script>
   <script type=module async src="std:elements/virtual-scroller"></script>
   <style>
+    :not(:defined) { display: none; }
    .bad, .bad *:not(.X\58X) { color: gray; }
 
    .fingerprint { position: absolute; right: 0; z-index: 5; }
@@ -117,6 +122,11 @@
    #abstractimg .left, #abstractimg .bottom { word-spacing: 12px; }
    #abstractimg .right { font-size: 25px; }
   </style><body>
+    <script>
+      customElements.whenDefined("virtual-scroller").then(() => {
+        console.log("defined", performance.now());
+      });
+    </script>
 <virtual-scroller>
   <script async="" src=/html-dfn.js></script>
   <script data-file-issue-url=https://github.com/whatwg/html/issues/new async="" src=https://resources.whatwg.org/file-issue.js></script>
@@ -24983,7 +24993,4 @@ zero or more <code id=the-audio-element:the-track-element><a href=#the-track-ele
   <a href=#media-resource id=seeking:media-resource-5>media resource</a>, if any, that the user agent is able to seek to, at the time the
   attribute is evaluated.</p>
 
-  <p class=note>If the user agent can seek to anywhere in the <a href=#media-resource id=seeking:media-resource-6>media resource</a>, e.g.
-  because it is a simple movie file and the user agent and the server support HTTP Range requests,
-  then the attribute would return an object with one range, whose start is the time of the first
-  frame (the <a href=#earliest-possible-position id
+  <p class=note>If the user agent can seek to anywhere in the <a href=#media-resource id=seeking:media-resource-6>media res
