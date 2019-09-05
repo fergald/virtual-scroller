@@ -2,7 +2,7 @@
   <script>
     console.log("start", performance.now());
   </script>
-  <title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=https://resources.whatwg.org/spec.css><link rel=stylesheet href=https://resources.whatwg.org/standard.css><link rel=stylesheet href=https://resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=https://resources.whatwg.org/logo.svg><script>
+  <title>HTML Standard</title><meta content=#3c790a name=theme-color><link rel=stylesheet href=resources.whatwg.org/spec.css><link rel=stylesheet href=resources.whatwg.org/standard.css><link rel=stylesheet href=resources.whatwg.org/standard-shared-with-dev.css><link rel=icon href=resources.whatwg.org/logo.svg><script>
    function toggleStatus(div) {
      div.parentNode.classList.toggle('wrapped');
    }
@@ -128,10 +128,10 @@
       });
     </script>
 <virtual-scroller>
-  <script async="" src=/html-dfn.js></script>
-  <script data-file-issue-url=https://github.com/whatwg/html/issues/new async="" src=https://resources.whatwg.org/file-issue.js></script>
+  <script async="" src=html-dfn.js></script>
+  <script data-file-issue-url=https://github.com/whatwg/html/issues/new async="" src=resources.whatwg.org/file-issue.js></script>
   <header id=head class="head with-buttons">
-   <a href=https://whatwg.org/ class=logo><img src=https://resources.whatwg.org/logo.svg width=100 alt=WHATWG height=100></a>
+   <a href=https://whatwg.org/ class=logo><img src=resources.whatwg.org/logo.svg width=100 alt=WHATWG height=100></a>
    <hgroup><h1 class=allcaps>HTML</h1><h2 id=living-standard class="no-num no-toc">Living Standard — Last Updated <span class=pubdate>3 September 2019</span></h2></hgroup>
    
    <nav>
@@ -675,7 +675,7 @@
 
   <p>Features in this specification which can be <dfn id=fingerprinting-vector>used to
   fingerprint the user</dfn> are marked as this paragraph is.
-  <a href=#fingerprinting-vector id=fingerprint:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=/images/fingerprint.png width=46 height=64></a>
+  <a href=#fingerprinting-vector id=fingerprint:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=images/fingerprint.png width=46 height=64></a>
   </p>
 
   <p>Other features in the platform can be used for the same purpose, though, including, though not
@@ -1731,7 +1731,7 @@ a<c- p>.</c->setAttribute<c- p>(</c-><c- t>&apos;href&apos;</c-><c- p>,</c-> <c-
   fingerprinting vector that increases the chances of users being uniquely identified, user agents
   are encouraged to support the exact same set of <a href=#plugin id=plugins:plugin-4>plugins</a> for each
   user.
-  <a href=#fingerprinting-vector id=plugins:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=/images/fingerprint.png width=46 height=64></a>
+  <a href=#fingerprinting-vector id=plugins:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=images/fingerprint.png width=46 height=64></a>
   </p>
 
   
@@ -1948,7 +1948,7 @@ a<c- p>.</c->setAttribute<c- p>(</c-><c- t>&apos;href&apos;</c-><c- p>,</c-> <c-
   <p id=hardwareLimitations>User agents may impose implementation-specific limits on otherwise
   unconstrained inputs, e.g. to prevent denial of service attacks, to guard against running out of
   memory, or to work around platform-specific limitations.
-  <a href=#fingerprinting-vector id=conformance-classes:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=/images/fingerprint.png width=46 height=64></a>
+  <a href=#fingerprinting-vector id=conformance-classes:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=images/fingerprint.png width=46 height=64></a>
   </p>
 
   <p>For compatibility with existing content and prior specifications, this specification describes
@@ -5976,7 +5976,7 @@ o<c- p>.</c->myself <c- o>=</c-> o<c- p>;</c-></code></pre>
   origin</a>, the user agent must throw a <a id=resource-metadata-management:securityerror-2 href=https://heycam.github.io/webidl/#securityerror data-x-internal=securityerror>"<code>SecurityError</code>"</a>
   <code id=resource-metadata-management:domexception-2><a data-x-internal=domexception href=https://heycam.github.io/webidl/#dfn-DOMException>DOMException</a></code>. Otherwise, the user agent must return the <a href=#cookie-string id=resource-metadata-management:cookie-string>cookie-string</a>
   for the document's <a href=https://dom.spec.whatwg.org/#concept-document-url id="resource-metadata-management:the-document's-address-4" data-x-internal="the-document's-address">URL</a> for a "non-HTTP" API, decoded
-  using <a id=resource-metadata-management:utf-8-decode-without-bom href=https://encoding.spec.whatwg.org/#utf-8-decode-without-bom data-x-internal=utf-8-decode-without-bom>UTF-8 decode without BOM</a>. <a href=#refsCOOKIES>[COOKIES]</a><a href=#fingerprinting-vector id=resource-metadata-management:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=/images/fingerprint.png width=46 height=64></a></p>
+  using <a id=resource-metadata-management:utf-8-decode-without-bom href=https://encoding.spec.whatwg.org/#utf-8-decode-without-bom data-x-internal=utf-8-decode-without-bom>UTF-8 decode without BOM</a>. <a href=#refsCOOKIES>[COOKIES]</a><a href=#fingerprinting-vector id=resource-metadata-management:fingerprinting-vector class=fingerprint title="There is a potential fingerprinting vector here."><img alt="(This is a fingerprinting vector.)" src=images/fingerprint.png width=46 height=64></a></p>
 
   <p>On setting, if the document is a <a href=#cookie-averse-document-object id=resource-metadata-management:cookie-averse-document-object-2>cookie-averse <code>Document</code> object</a>, then
   the user agent must do nothing. Otherwise, if the <code id=resource-metadata-management:document-7><a href=#document>Document</a></code>'s <a href=#concept-origin id=resource-metadata-management:concept-origin-2>origin</a> is
@@ -6973,7 +6973,7 @@ console<c- p>.</c->assert<c- p>(</c->image<c- p>.</c->height <c- o>===</c-> <c- 
 
   <p>These categories are related as follows:</p>
 
-  <p><object width=1000 height=288 data=/images/content-venn.svg></object></p>
+  <p><object width=1000 height=288 data=images/content-venn.svg></object></p>
 
   <p>Sectioning content, heading content, phrasing content, embedded content, and interactive
   content are all types of flow content. Metadata is sometimes flow content. Metadata and
@@ -7930,7 +7930,7 @@ console<c- p>.</c->assert<c- p>(</c->image<c- p>.</c->height <c- o>===</c-> <c- 
    namely to align the text to the <i>start edge</i> of the paragraph, the resulting rendering could
    be as follows:</p>
 
-   <p><img width=366 src=/images/im.png height=157 alt="Each paragraph rendered as a separate block, with the paragraphs left-aligned except the second paragraph and the last one, which would  be right aligned, with the usernames ('Student' and 'Teacher' in this example) flush right, with a colon to their left, and the text first to the left of that."></p>
+   <p><img width=366 src=images/im.png height=157 alt="Each paragraph rendered as a separate block, with the paragraphs left-aligned except the second paragraph and the last one, which would  be right aligned, with the usernames ('Student' and 'Teacher' in this example) flush right, with a colon to their left, and the text first to the left of that."></p>
 
    <p>As noted earlier, the <code id=the-dir-attribute:attr-dir-auto><a href=#attr-dir-auto>auto</a></code> value is not a panacea. The
    final paragraph in this example is misinterpreted as being right-to-left text, since it begins
@@ -24993,4 +24993,5 @@ zero or more <code id=the-audio-element:the-track-element><a href=#the-track-ele
   <a href=#media-resource id=seeking:media-resource-5>media resource</a>, if any, that the user agent is able to seek to, at the time the
   attribute is evaluated.</p>
 
-  <p class=note>If the user agent can seek to anywhere in the <a href=#media-resource id=seeking:media-resource-6>media res
+  <p class=note>If the user agent can seek to anywhere in the <a href=#media-resource id=seeking:media-resource-6>media resource</a>, e.g.
+  because it is a simple movie file and
