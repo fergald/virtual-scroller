@@ -1,0 +1,119 @@
+<style>
+  .resize {
+      animation-direction: alternate;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      animation-name: resize;
+  }
+  @keyframes resize {
+      0% { width: 400px; }
+      100% { width: 600px; }
+  }
+</style>
+<script type=module src="../util/confirm-features.mjs"></script>
+<confirm-features></confirm-features>
+<div style="width: 100%; display: flex">
+  <raf-spinner id=spinner></raf-spinner>
+  <div id=statusDiv>
+    <p>Parameters you can tweak in the URL (and their current settings).</p>
+  </div>
+</div>
+<div id=buttonDiv>
+  <input type=button onClick="togglePause()" value="toggle pause">
+</div>
+<div style="width: 100%">
+  <div id=contentDiv style="overflow: scroll; height: 400px; "></div>
+</div>
+
+<script type="module">
+  import '../util/raf-spinner.mjs';
+  import * as Locker from '../util/Locker.mjs';
+  import * as Params from '../util/Params.mjs';
+  import * as Base from './base.mjs';
+  import * as RevealTree from './RevealTree.mjs';
+  import * as Siblings from './Siblings.mjs';
+
+  let statusDiv = document.getElementById("statusDiv")
+  const resize = Params.get("resize", (p) => { return parseInt(p)}, statusDiv);
+  if (resize) {
+    contentDiv.className = "resize";
+  }
+  if (Params.get("pauseSpinner", (p) => { return parseInt(p)}, statusDiv)) {
+    document.getElementById("spinner").pause();
+  }
+  let useLT = Params.get("useLT", (p) => {return parseInt(p) || 0}, statusDiv);
+  let elementType = useLT ? "reveal-tree" : "div";
+  let lt = document.createElement(elementType);
+  lt.setAttribute("use-isa", Params.get("useISA", (p) => { return parseInt(p)}, statusDiv));
+  lt.setAttribute("branch", Params.get("branch", (p) => { return parseInt(p) || 10}, statusDiv));
+  lt.id = "lt";
+  contentDiv.appendChild(lt);
+  Base.populate(lt, statusDiv);
+
+  function getBCR(e) {
+    let t = performance.now();
+    e.getBoundingClientRect();
+    console.log("Took: ", performance.now() - t, e);
+  }
+
+  let pause = Params.get("pause", (p) => { return parseInt(p)}, statusDiv);
+  function togglePause() {
+    pause = !pause;
+  }
+  window.togglePause = togglePause;
+
+  function maybeUpdate(i) {
+    if (!pause) {
+      update(i);
+    }
+  }
+
+  function update(i) {
+    // Count how many locked elements there are.
+    if (! (i % 100) && false) {
+      let locked = 0;
+      lt.traverse(e => { if (e.displayLock.locked) { locked++} });
+      console.log("locked=", locked);
+    }
+    // let childIndex = (i % 2) ? 5 : lt.children.length - 5;
+    let childIndex = (i * 10) % lt.children.length;
+    try {
+      const elements = Siblings.neighbours(lt.children[childIndex], 5);
+      lt.revealElements(elements);
+      elements[0].scrollIntoView();
+    } catch(e) {
+      console.log(childIndex);
+      throw e;
+    }
+  }
+
+  let nFrames = Params.get("nFrames", (p) => {return parseInt(p) || 1}, statusDiv);
+  function go() {
+    console.log("Start unlocking", nFrames);
+    Base.everyNFrames(nFrames, maybeUpdate);
+    if (pause) {
+      update(0);
+    }
+  }
+
+  function doPopulate() {
+    lt.populate();
+  }
+
+  let populate = Params.get("populate", (p) => {return parseInt(p) || 1}, statusDiv);
+  if (populate) {
+    doPopulate();
+    go();
+  } else {
+    const button = document.createElement("input");
+    button.type = "button"
+    button.value = "populate";
+    button.onclick = () => {
+      button.value = "go";
+      button.onclick = go;
+      doPopulate();
+    };
+    buttonDiv.appendChild(button);
+  }
+</script>
