@@ -2,7 +2,7 @@ import * as Words from '../util/Words.mjs';
 import * as Locker from '../util/Locker.mjs'
 import * as Params from '../util/Params.mjs'
 
-export function populate(vc, statusDiv) {
+export function populate(vc, statusDiv, content) {
   if (vc.setFromUrl) {
     vc.setFromUrl(document.location, statusDiv);
   } else {
@@ -10,13 +10,20 @@ export function populate(vc, statusDiv) {
   }
 
   let wordCount = Params.get("words", (p) => { return parseInt(p) || 50 }, statusDiv);
-  let divCount = Params.get("divs", (p) => { return parseInt(p) || 10000 }, statusDiv);
-  let words = Words.words(wordCount);
+  if (!content) {
+    let divCount = Params.get("divs", (p) => { return parseInt(p) || 10000 }, statusDiv);
+    let words = Words.words(wordCount);
+    const f = new DocumentFragment();
+    for (const e of Words.divs(divCount, words)) {
+      f.append(e);
+    }
+    content = f.children;
+  }
   let i = 0;
   // Will be NaN if not supplied and i>=lockFrom will never be true.
   let lockFrom = Params.get("lockFrom", parseInt, statusDiv);
-  for (const div of Words.divs(divCount, words)) {
-    vc.appendChild(div);
+  while(content.length) {
+    vc.appendChild(content[0]);
     if (i >= lockFrom) {
       div.displayLock.acquire({
         timeout: Infinity,
