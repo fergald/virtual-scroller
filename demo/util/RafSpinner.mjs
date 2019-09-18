@@ -164,8 +164,10 @@ export class RafSpinner extends HTMLElement {
       this.last_time = timestamp;
     // Update the data, and redraw.
     let timeDiff = timestamp - this.last_time;
-    this.updateData(timeDiff);
-    this.redrawSweep();
+    if (!this.hasAttribute("nospinner")) {
+      this.updateData(timeDiff);
+      this.redrawSweep();
+    }
     this.last_time = timestamp;
     this.updateFps(timeDiff);
     this.scheduleUpdate();
