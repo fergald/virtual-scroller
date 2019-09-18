@@ -37,7 +37,7 @@
   let statusDiv = document.getElementById("statusDiv")
   const resize = Params.get("resize", (p) => { return parseInt(p)}, statusDiv);
   if (resize) {
-    contentDiv.className = "resize";
+    contentDiv.classList.add("resize");
   }
   if (Params.get("pauseSpinner", (p) => { return parseInt(p)}, statusDiv)) {
     document.getElementById("spinner").pause();
@@ -60,6 +60,13 @@
   let pause = Params.get("pause", (p) => { return parseInt(p)}, statusDiv);
   function togglePause() {
     pause = !pause;
+    if (resize) {
+      if (pause) {
+        contentDiv.classList.remove("resize");
+      } else {
+        contentDiv.classList.add("resize");
+      }
+    }
   }
   window.togglePause = togglePause;
 
