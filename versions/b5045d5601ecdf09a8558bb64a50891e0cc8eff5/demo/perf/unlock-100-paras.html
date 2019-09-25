@@ -1,0 +1,99 @@
+Lays out some text so that we can observe performance of layout with/without locking.<br>
+
+Select your parameters, start tracing in the debug tool and hit
+Go. Then go look at the time spent in layout. <br>
+<br>
+Desired number of elements: <input type=input value=100 id=elementCount><br>
+Use locking? <input type=checkbox id=useLocking><br>
+Use update? (will force locking): <input type=checkbox id=useUpdate onClick="if (useUpdate.checked) { useLocking.checked = true }"><br>
+Use bold every n words? (0=no bold)<input type=input id=useBold value=0><br>
+<input type=button value=go onClick="go()"><br>
+<input type=button value=stop onClick="stop()"><br>
+<style>
+div {
+  display: block !important;
+  contain: layout style;
+  font-size: 10pt;
+}
+</style>
+
+
+<div id=stats>
+</div>
+<div id=contentDiv>
+</div>
+
+<script type="module">
+  import * as Words from '../util/Words.mjs';
+  import * as Locker from '../util/Locker.mjs'
+
+  let locker = new Locker.Locker();
+
+  function getBCR(e) {
+    let t = performance.now();
+    e.getBoundingClientRect();
+    console.log("Took: ", performance.now() - t, e);
+  }
+
+  function construct() {
+    let words = Words.words(50, useBold.value);
+    let divs = Words.divs(elementCount.value, words);
+    for (const e of divs) {
+      contentDiv.appendChild(e);
+      if (useLocking.checked) {
+        locker.lock(e);
+        if (useUpdate.checked) {
+          locker.update(e);
+        }
+      }
+    }
+  }
+
+  function unlock() {
+    console.log("Start unlocking");
+    //    getBCR(contentDiv);
+    for (const e of contentDiv.children) {
+      locker.unlock(e);
+    }
+  }
+
+  function forceLayout() {
+    getBCR(contentDiv);
+    console.log("Done");
+  }
+
+  let i = 100;
+  function go() {
+    i = 100;
+    doIfI();
+  }
+  window.go = go;
+
+  function stop() {
+    i = -1;
+  }
+  window.stop = stop;
+
+  function doIfI() {
+    console.log(i);
+    if (i-- < 0) {
+      return;
+    }
+    contentDiv.innerHTML = "";
+    getBCR(contentDiv);
+    construct();
+    getBCR(contentDiv);
+    if (useLocking.checked) {
+      setTimeout(() => {
+        unlock();
+        forceLayout();
+        doIfI();
+      }, 0);
+    } else {
+      forceLayout();
+      setTimeout(() => {
+        doIfI();
+      }, 0);
+    }
+  }
+</script>
