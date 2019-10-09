@@ -12,8 +12,12 @@ function redP(textContent) {
 class ConfirmFeatures extends HTMLElement {
   constructor() {
     super();
-    if (this.displayLock === undefined) {
-      this.appendChild(redP('Display Locking is not available'));
+    if (!('contentSize' in element.style) {
+      this.appendChild(redP('CSSContentSize is not available'));
+    }
+
+    if (!('renderSubtree' in element)) {
+      this.appendChild(redP('rendersubtree is not available'));
     }
 
     const slot = document.createElement('slot');
