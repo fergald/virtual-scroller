@@ -12,7 +12,7 @@ function redP(textContent) {
 class ConfirmFeatures extends HTMLElement {
   constructor() {
     super();
-    if (!('contentSize' in element.style) {
+    if (!('contentSize' in element.style)) {
       this.appendChild(redP('CSSContentSize is not available'));
     }
 
