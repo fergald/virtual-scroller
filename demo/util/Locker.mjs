@@ -1,35 +1,22 @@
 import * as Params from './Params.mjs';
 export class Locker {
-  constructor(size, rs) {
+  constructor(size) {
     this.size = size || [10, 50];
-    this.rs = rs;
   }
 
   lock(element, andThen) {
     let size = element.lockSize ? [10, element.lockSize] : this.size;
-    if (this.rs) {
-      element.setAttribute('rendersubtree', 'invisible activatable');
-      element.style.contentSize = `${size[0]}px ${size[1]}px`;
-    } else {
-      return element.displayLock.acquire({
-        timeout: Infinity,
-        activatable: true,
-        size: size,
-      }).then(andThen);
-    }
+    element.setAttribute('rendersubtree', 'invisible activatable');
+    element.style.contentSize = `${size[0]}px ${size[1]}px`;
   }
 
   update(element, andThen) {
-    return element.displayLock.update().then(andThen, reason => {console.log("Rejected: ", reason.message)});
+    return element.updateRendering();
   }
 
   unlock(element, andThen) {
-    if (this.rs) {
-      element.removeAttribute('rendersubtree');
-      element.style.contentSize = '';
-    } else {
-      return element.displayLock.commit().then(andThen);
-    }
+    element.removeAttribute('rendersubtree');
+    element.style.contentSize = '';
   }
 
   warn(element) {
@@ -41,5 +28,4 @@ export class Locker {
   }
 }
 
-const rs = Params.get("renderSubtree", (p) => { return parseInt(p) || 0}, statusDiv);
-export const locker = new Locker(rs);
+export const locker = new Locker();
