@@ -16,7 +16,7 @@ export class Locker {
 
   unlock(element, andThen) {
     element.removeAttribute('rendersubtree');
-    element.style.contentSize = '';
+    element.style.intrinsicSize = '';
   }
 
   warn(element) {
