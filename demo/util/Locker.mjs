@@ -6,7 +6,7 @@ export class Locker {
 
   lock(element, andThen) {
     let size = element.lockSize ? [10, element.lockSize] : this.size;
-    element.setAttribute('rendersubtree', 'invisible activatable');
+    element.setAttribute('rendersubtree', 'invisible');
     element.style.intrinsicSize = `${size[0]}px ${size[1]}px`;
   }
 
