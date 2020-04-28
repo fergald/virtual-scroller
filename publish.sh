@@ -27,7 +27,7 @@ shift
 
 git checkout gh-pages
 
-sha=$(git show --oneline --no-abbrev -s "$revision" | cut -f 1 -d " ")
+sha=$(git rev-parse "$revision")
 dest=versions/"$sha"
 git clone -s -n . "$dest"
 (
