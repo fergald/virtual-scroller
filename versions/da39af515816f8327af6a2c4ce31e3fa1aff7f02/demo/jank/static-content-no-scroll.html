@@ -1,0 +1,14 @@
+<style>
+  #vc > div { contain: style layout };
+</style>
+<raf-spinner id=spinner></raf-spinner>
+<div id=contentDiv style="contain: strict; height: 100px; width: 100px">
+  <div id=vc></div>
+</div>
+
+<script type="module">
+  import '../util/raf-spinner.mjs';
+  import * as Base from './base.mjs';
+
+  Base.populate(document.getElementById("vc"));
+</script>
