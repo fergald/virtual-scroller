@@ -7,7 +7,7 @@ export class Locker {
   lock(element, andThen) {
     let size = element.lockSize ? [10, element.lockSize] : this.size;
     element.style.containIntrinsicSize = `${size[0]}px ${size[1]}px`;
-    element.style.contentVisibility = "hidden";
+    element.style.contentVisibility = "auto";
   }
 
   update(element, andThen) {
