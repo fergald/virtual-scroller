@@ -6,8 +6,8 @@ export class Locker {
 
   lock(element, andThen) {
     let size = element.lockSize ? [10, element.lockSize] : this.size;
-    element.setAttribute('rendersubtree', 'invisible');
-    element.style.intrinsicSize = `${size[0]}px ${size[1]}px`;
+    element.style.containIntrinsicSize = `${size[0]}px ${size[1]}px`;
+    element.style.contentVisibility = "hidden";
   }
 
   update(element, andThen) {
@@ -15,8 +15,8 @@ export class Locker {
   }
 
   unlock(element, andThen) {
-    element.removeAttribute('rendersubtree');
-    element.style.intrinsicSize = '';
+    element.style.contentVisibility = "";
+    element.style.containIntrinsicSize = "";
   }
 
   warn(element) {

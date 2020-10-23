@@ -13,12 +13,11 @@ class ConfirmFeatures extends HTMLElement {
   constructor() {
     super();
     const element = document.createElement('p');
-    if (!('contentSize' in element.style)) {
-      this.appendChild(redP('CSSContentSize is not available'));
+    if (!('containIntrinsicSize' in element.style)) {
+      this.appendChild(redP('style.containIntrinsicSize is not available'));
     }
-
-    if (!('renderSubtree' in element)) {
-      this.appendChild(redP('rendersubtree is not available'));
+    if (!('contentVisibility' in element.style)) {
+      this.appendChild(redP('style.contentVisibility is not available'));
     }
 
     const slot = document.createElement('slot');
